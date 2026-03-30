@@ -131,7 +131,16 @@ export async function fetchWhatsAppConfig() {
     //
     // const result = await response.json();
 
-    const result = {};
+    const result = {
+      data: {
+        storeConfig: {
+          whatsapp_phone: 12342454645,
+          whatsapp_message: 'test message',
+          enabled: true,
+          whatsapp_use_custom_icon: false
+        },
+      },
+    };
 
     // Check for GraphQL errors
     if (result.errors) {
