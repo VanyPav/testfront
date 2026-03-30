@@ -1,0 +1,7 @@
+{
+  ims: {
+    config: {
+      current: "cli"
+    }
+  }
+}

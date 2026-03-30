@@ -43,6 +43,8 @@ export default async function initializeDropins() {
     const token = getUserTokenCookie();
     // set auth headers
     setAuthHeaders(!!token);
+    // Initialize WhatsApp
+    import('./whatsapp.js');
 
     // Event Bus Logger
     events.enableLogger(true);
