@@ -120,22 +120,24 @@ export async function fetchWhatsAppConfig() {
       credentials: 'omit',
     };
 
-    const endpoint = getWhatsAppGraphQLEndpoint();
+    // const endpoint = getWhatsAppGraphQLEndpoint();
+    //
+    // const response = await fetch(endpoint, requestOptions);
+    //
+    // if (!response.ok) {
+    //   const errorText = await response.text();
+    //   throw new Error(`HTTP ${response.status}: ${errorText}`);
+    // }
+    //
+    // const result = await response.json();
 
-    const response = await fetch(endpoint, requestOptions);
-
-    if (!response.ok) {
-      const errorText = await response.text();
-      throw new Error(`HTTP ${response.status}: ${errorText}`);
-    }
-
-    const result = await response.json();
+    const result = {};
 
     // Check for GraphQL errors
     if (result.errors) {
       return null;
     }
-
+debugger
     // Extract storeConfig from response
     const { storeConfig } = result.data || {};
     if (!storeConfig) {
