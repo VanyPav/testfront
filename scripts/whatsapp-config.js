@@ -134,10 +134,10 @@ export async function fetchWhatsAppConfig() {
     const result = {
       data: {
         storeConfig: {
-          whatsapp_phone: 12342454645,
+          whatsapp_phone: '+12342454645',
           whatsapp_message: 'test message',
           enabled: true,
-          whatsapp_use_custom_icon: false
+          whatsapp_use_custom_icon: false,
         },
       },
     };
@@ -146,7 +146,7 @@ export async function fetchWhatsAppConfig() {
     if (result.errors) {
       return null;
     }
-debugger
+
     // Extract storeConfig from response
     const { storeConfig } = result.data || {};
     if (!storeConfig) {
