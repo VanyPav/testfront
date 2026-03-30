@@ -136,8 +136,9 @@ export async function fetchWhatsAppConfig() {
         storeConfig: {
           whatsapp_phone: '+12342454645',
           whatsapp_message: 'test message',
-          enabled: true,
+          whatsapp_enabled: true,
           whatsapp_use_custom_icon: false,
+          whatsapp_icon_position: 'whatsapp-top-left',
         },
       },
     };
