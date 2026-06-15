@@ -7,5 +7,5 @@
 import renderTextField from './text-field.js';
 
 export default function renderNumberInput(input, mountNode, fieldState) {
-    renderTextField(input, mountNode, fieldState, 'number');
+  renderTextField(input, mountNode, fieldState, 'number');
 }

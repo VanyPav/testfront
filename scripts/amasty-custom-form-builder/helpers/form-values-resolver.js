@@ -10,88 +10,85 @@ const OPTION_VALUE_KEYS = ['value', 'label', 'name', 'text', 'title', 'id'];
 const OPTION_LOOKUP_KEYS = ['id', 'option_id', 'value', 'label', 'name', 'text', 'title'];
 
 function pickFirstNormalizedValue(source, keys) {
-    for (const key of keys) {
-        const normalizedValue = normalizeControlValue(source?.[key]);
-        if (normalizedValue) {
-            return normalizedValue;
-        }
-    }
+  const matchedValue = keys
+    .map((key) => normalizeControlValue(source?.[key]))
+    .find(Boolean);
 
-    return '';
+  return matchedValue || '';
 }
 
 function getInputIdByFieldName(fieldName) {
-    const normalizedFieldName = String(fieldName).replace('am_custom_field_', '');
-    const parsedInputId = Number.parseInt(normalizedFieldName, 10);
+  const normalizedFieldName = String(fieldName).replace('am_custom_field_', '');
+  const parsedInputId = Number.parseInt(normalizedFieldName, 10);
 
-    return Number.isFinite(parsedInputId) ? parsedInputId : normalizedFieldName;
+  return Number.isFinite(parsedInputId) ? parsedInputId : normalizedFieldName;
 }
 
 function getNormalizedValues(rawValue) {
-    if (Array.isArray(rawValue)) {
-        return rawValue
-            .map((value) => normalizeControlValue(value))
-            .filter(Boolean);
-    }
+  if (Array.isArray(rawValue)) {
+    return rawValue
+      .map((value) => normalizeControlValue(value))
+      .filter(Boolean);
+  }
 
-    const normalizedValue = normalizeControlValue(rawValue);
+  const normalizedValue = normalizeControlValue(rawValue);
 
-    return normalizedValue ? [normalizedValue] : [];
+  return normalizedValue ? [normalizedValue] : [];
 }
 
 function createOptionValueLookup(input) {
-    const rawOptions = Array.isArray(input?.settings?.options) ? input.settings.options : [];
-    const optionValueByLookup = new Map();
+  const rawOptions = Array.isArray(input?.settings?.options) ? input.settings.options : [];
+  const optionValueByLookup = new Map();
 
-    rawOptions.forEach((option) => {
-        if (typeof option === 'string') {
-            const normalizedOptionValue = normalizeControlValue(option);
-            
-            if (normalizedOptionValue) {
-                optionValueByLookup.set(normalizedOptionValue, normalizedOptionValue);
-            }
+  rawOptions.forEach((option) => {
+    if (typeof option === 'string') {
+      const normalizedOptionValue = normalizeControlValue(option);
 
-            return;
-        }
+      if (normalizedOptionValue) {
+        optionValueByLookup.set(normalizedOptionValue, normalizedOptionValue);
+      }
 
-        const optionValue = pickFirstNormalizedValue(option, OPTION_VALUE_KEYS);
+      return;
+    }
 
-        if (!optionValue) {
-            return;
-        }
+    const optionValue = pickFirstNormalizedValue(option, OPTION_VALUE_KEYS);
 
-        OPTION_LOOKUP_KEYS.forEach((lookupKeyName) => {
-            const lookupKey = normalizeControlValue(option?.[lookupKeyName]);
+    if (!optionValue) {
+      return;
+    }
 
-            if (lookupKey) {
-                optionValueByLookup.set(lookupKey, optionValue);
-            }
-        });
+    OPTION_LOOKUP_KEYS.forEach((lookupKeyName) => {
+      const lookupKey = normalizeControlValue(option?.[lookupKeyName]);
+
+      if (lookupKey) {
+        optionValueByLookup.set(lookupKey, optionValue);
+      }
     });
+  });
 
-    return optionValueByLookup;
+  return optionValueByLookup;
 }
 
 export default function buildSubmissionPayload(inputSettings, values) {
-    const inputMeta = inputSettings.map((input) => {
-        const fieldName = getFieldName(input);
+  const inputMeta = inputSettings.map((input) => {
+    const fieldName = getFieldName(input);
 
-        return {
-            fieldName,
-            id: getInputIdByFieldName(fieldName),
-            optionValueLookup: createOptionValueLookup(input),
-        };
-    });
+    return {
+      fieldName,
+      id: getInputIdByFieldName(fieldName),
+      optionValueLookup: createOptionValueLookup(input),
+    };
+  });
 
-    return inputMeta.map((field) => {
-        const normalizedValues = getNormalizedValues(values[field.fieldName]);
-        const value = normalizedValues
-            .map((entry) => field.optionValueLookup.get(entry) || entry)
-            .join(',');
+  return inputMeta.map((field) => {
+    const normalizedValues = getNormalizedValues(values[field.fieldName]);
+    const value = normalizedValues
+      .map((entry) => field.optionValueLookup.get(entry) || entry)
+      .join(',');
 
-        return {
-            id: field.id,
-            value,
-        };
-    });
+    return {
+      id: field.id,
+      value,
+    };
+  });
 }
