@@ -44,7 +44,7 @@ export default async function initializeDropins() {
     // set auth headers
     setAuthHeaders(!!token);
     // Initialize WhatsApp
-    import('./whatsapp.js');
+    //import('./whatsapp.js');
 
     // Event Bus Logger
     events.enableLogger(true);

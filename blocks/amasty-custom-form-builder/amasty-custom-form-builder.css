@@ -1,0 +1,55 @@
+/**
+ * @author Amasty Team
+ * @copyright Copyright (c) Amasty (https://www.amasty.com)
+ * @package Custom Form Builder
+ */
+
+.amasty-custom-form-builder {
+    --amasty-custom-form-builder-error-color: #c62828;
+
+    .amasty-custom-form-builder__form-element {
+        display: flex;
+        flex-direction: column;
+        gap: 12px;
+    }
+
+    .amasty-custom-form-builder__fields {
+        display: flex;
+        flex-direction: column;
+        gap: 12px;
+    }
+
+    .amasty-custom-form-builder__field-label {
+        margin: 0 0 6px;
+    }
+
+    .amasty-custom-form-builder__field-label--required::after {
+        content: ' *';
+        color: var(--amasty-custom-form-builder-error-color);
+    }
+
+    .amasty-custom-form-builder__field-error {
+        margin: 6px 0 0;
+        color: var(--amasty-custom-form-builder-error-color);
+    }
+
+    .amasty-custom-form-builder__submit {
+        align-self: flex-end;
+    }
+
+    .dropin-textarea__label--floating--text.dropin-textarea__label--floating--error {
+        font-size: 1.6rem;
+        line-height: 1.4;
+    }
+
+    .amasty-custom-form-builder__alert {
+        width: 100%;
+        align-self: stretch;
+    }
+
+    .amasty-custom-form-builder__alert .dropin-alert-banner {
+        width: 100%;
+        max-width: 100%;
+        box-sizing: border-box;
+    }
+}

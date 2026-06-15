@@ -24,6 +24,7 @@
   },
   "homepage": "https://github.com/hlxsites/aem-boilerplate-commerce#readme",
   "devDependencies": {
+    "@adobe-commerce/commerce-extensibility-tools": "^3.4.0",
     "@adobe/aem-cli": "^16.5.8",
     "@babel/eslint-parser": "7.25.9",
     "@dropins/build-tools": "1.0.1",

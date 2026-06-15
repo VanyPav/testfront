@@ -23,6 +23,9 @@
         "store-view-name": "Default Store View",
         "website-id": 1,
         "website-name": "Main Website"
+      },
+      "amasty": {
+        "custom-form-builder-endpoint": "https://edge-sandbox-graph.adobe.io/api/dd99356e-fa0d-4f7f-a7c0-34ed9ab6a833/graphql"
       }
     }
   }
