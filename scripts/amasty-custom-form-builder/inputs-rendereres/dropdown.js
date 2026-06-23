@@ -31,7 +31,6 @@ export default function renderDropdown(input, mountNode, fieldState) {
     mountNode.textContent = '';
     UI.render(Picker, {
       name: getFieldName(input),
-      floatingLabel: getFieldLabel(input),
       placeholder: settings.placeholder || 'Select option',
       options: pickerOptions,
       value,

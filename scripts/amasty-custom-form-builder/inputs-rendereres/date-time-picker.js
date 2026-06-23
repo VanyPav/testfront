@@ -24,7 +24,6 @@ export default function renderDateTimePicker(input, mountNode, fieldState) {
     UI.render(InputDate, {
       name: getFieldName(input),
       value,
-      label: getFieldLabel(input),
       required: isFieldRequired(input),
       error: fieldState.hasError ? fieldState.errorMessage : undefined,
       onChange: (event) => {

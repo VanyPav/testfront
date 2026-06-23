@@ -26,7 +26,6 @@ export default function renderTextField(input, mountNode, fieldState, inputType 
       type: inputType,
       name: getFieldName(input),
       value,
-      floatingLabel: getFieldLabel(input),
       placeholder: settings.placeholder || undefined,
       maxLength: getMaxLength(settings),
       required: isFieldRequired(input),
