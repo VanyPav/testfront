@@ -71,7 +71,7 @@ export default async function decorate(block) {
     alertContainer.textContent = '';
 
     try {
-      const isValid = formState.validateRequiredFields();
+      const isValid = formState.validateFormFields();
       if (!isValid) {
         return;
       }

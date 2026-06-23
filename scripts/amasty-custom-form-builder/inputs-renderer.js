@@ -11,7 +11,7 @@ import renderDateTimePicker from './inputs-rendereres/date-time-picker.js';
 import renderDropdown from './inputs-rendereres/dropdown.js';
 import renderRadioButton from './inputs-rendereres/radio-button.js';
 import renderCheckbox from './inputs-rendereres/checkbox.js';
-import validateRequiredFields from './validation/required-fields-validation.js';
+import validateFormFields from './validation/form-fields-validation.js';
 import {
   getFieldName,
   getFieldLabel,
@@ -60,7 +60,7 @@ export function renderInputSettings(inputSettings, rootNode) {
 
   if (!Array.isArray(inputSettings)) {
     return {
-      validateRequiredFields: () => true,
+      validateFormFields: () => true,
       getValues: () => ({}),
     };
   }
@@ -113,7 +113,7 @@ export function renderInputSettings(inputSettings, rootNode) {
   }
 
   return {
-    validateRequiredFields: () => validateRequiredFields(fieldStates),
+    validateFormFields: () => validateFormFields(fieldStates),
     getValues,
   };
 }
