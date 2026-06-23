@@ -9,7 +9,6 @@ import {
   normalizeOptions,
   normalizeControlValue,
   getFieldName,
-  getFieldLabel,
   isFieldRequired,
 } from '../helpers/domHelpers.js';
 

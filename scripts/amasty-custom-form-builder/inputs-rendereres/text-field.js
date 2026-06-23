@@ -8,7 +8,6 @@ import { Input, provider as UI } from '@dropins/tools/components.js';
 import {
   normalizeControlValue,
   getFieldName,
-  getFieldLabel,
   getMaxLength,
   isFieldRequired,
 } from '../helpers/domHelpers.js';
