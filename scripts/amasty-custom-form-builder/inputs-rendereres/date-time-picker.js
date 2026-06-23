@@ -17,15 +17,25 @@ export default function renderDateTimePicker(input, mountNode, fieldState) {
   let value = normalizeControlValue(settings.defaultValue);
 
   fieldState.getValue = () => value;
+  fieldState.showExternalError = false;
 
-  mountNode.textContent = '';
-  UI.render(InputDate, {
-    name: getFieldName(input),
-    value,
-    label: getFieldLabel(input),
-    required: isFieldRequired(input),
-    onChange: (event) => {
-      value = event?.target?.value ?? '';
-    },
-  })(mountNode);
+  const render = () => {
+    mountNode.textContent = '';
+    UI.render(InputDate, {
+      name: getFieldName(input),
+      value,
+      label: getFieldLabel(input),
+      required: isFieldRequired(input),
+      error: fieldState.hasError ? fieldState.errorMessage : undefined,
+      onChange: (event) => {
+        value = event?.target?.value ?? '';
+      },
+    })(mountNode);
+  };
+
+  fieldState.onErrorChange = () => {
+    render();
+  };
+
+  render();
 }
