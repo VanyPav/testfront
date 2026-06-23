@@ -12,7 +12,7 @@ import {
   isFieldRequired,
 } from '../helpers/domHelpers.js';
 
-export default function renderTextField(input, mountNode, fieldState, inputType = 'text') {
+export default function renderTextField(input, mountNode, fieldState, inputType = 'text', inputProps = {}) {
   const settings = input?.settings ?? {};
   let value = normalizeControlValue(settings.defaultValue);
 
@@ -32,6 +32,7 @@ export default function renderTextField(input, mountNode, fieldState, inputType 
       onValue: (nextValue) => {
         value = nextValue ?? '';
       },
+      ...inputProps,
     })(mountNode);
   };
 
