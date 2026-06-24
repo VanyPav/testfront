@@ -44,6 +44,40 @@
         color: var(--color-alert-800);
     }
 
+    .amasty-custom-form-builder__field--invalid .dropin-picker select,
+    .amasty-custom-form-builder__field--invalid .dropin-picker__select {
+        border: var(--shape-border-width-2) solid var(--color-alert-500);
+        color: var(--color-alert-500);
+    }
+
+    .amasty-custom-form-builder__field--invalid .dropin-picker .dropin-picker__chevronDown,
+    .amasty-custom-form-builder__field--invalid .dropin-picker label {
+        color: var(--color-alert-500);
+    }
+
+    .amasty-custom-form-builder__field--invalid .dropin-radio-button__label::before {
+        box-shadow: 0 0 0 var(--shape-border-width-2) var(--color-alert-500);
+        background: var(--color-neutral-50) 0 0% no-repeat padding-box;
+    }
+
+    .amasty-custom-form-builder__field--invalid .dropin-radio-button__input:checked + .dropin-radio-button__label::after {
+        background: var(--color-alert-500);
+    }
+
+    .amasty-custom-form-builder__field--invalid .dropin-checkbox__box {
+        border: var(--shape-border-width-2) solid var(--color-alert-500);
+        background: var(--color-neutral-50) 0 0 no-repeat padding-box;
+    }
+
+    .amasty-custom-form-builder__field--invalid .dropin-checkbox__checkbox:checked + .dropin-checkbox__checkbox-icon .dropin-checkbox__box {
+        border: none;
+        background: var(--color-alert-500) 0 0 no-repeat padding-box;
+    }
+
+    .amasty-custom-form-builder__field--invalid .dropin-checkbox__checkbox:checked + .dropin-checkbox__checkbox-icon .dropin-checkbox__box > .dropin-checkbox__checkmark {
+        background: var(--color-alert-500) 0 0 no-repeat padding-box;
+    }
+
     .amasty-custom-form-builder__option-group {
         display: flex;
         flex-direction: column;
