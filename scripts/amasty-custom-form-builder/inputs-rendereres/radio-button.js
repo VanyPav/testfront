@@ -34,6 +34,7 @@ export default function renderRadioButton(input, mountNode, fieldState) {
         error: fieldState.hasError,
         onChange: () => {
           selectedValue = option.value;
+          fieldState.revalidate();
           render();
         },
       })(optionNode);

@@ -31,6 +31,7 @@ export default function renderTextField(input, mountNode, fieldState, inputType 
       error: fieldState.hasError,
       onValue: (nextValue) => {
         value = nextValue ?? '';
+        fieldState.revalidate();
       },
       ...inputProps,
     })(mountNode);

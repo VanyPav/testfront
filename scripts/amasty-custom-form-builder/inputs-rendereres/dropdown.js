@@ -37,6 +37,7 @@ export default function renderDropdown(input, mountNode, fieldState) {
       error: fieldState.hasError,
       handleSelect: (event) => {
         value = event?.target?.value ?? '';
+        fieldState.revalidate();
       },
     })(mountNode);
   };

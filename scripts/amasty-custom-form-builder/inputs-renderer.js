@@ -11,7 +11,7 @@ import renderDateTimePicker from './inputs-rendereres/date-time-picker.js';
 import renderDropdown from './inputs-rendereres/dropdown.js';
 import renderRadioButton from './inputs-rendereres/radio-button.js';
 import renderCheckbox from './inputs-rendereres/checkbox.js';
-import validateFormFields from './validation/form-fields-validation.js';
+import validateFormFields, { validateField } from './validation/form-fields-validation.js';
 import {
   getFieldName,
   getFieldLabel,
@@ -80,8 +80,12 @@ export function renderInputSettings(inputSettings, rootNode) {
       showExternalError: true,
       onErrorChange: null,
       getValue: () => '',
+      revalidate: () => validateField(fieldState),
       setError: (message = '') => {
         const hasError = Boolean(message);
+        if (fieldState.hasError === hasError && fieldState.errorMessage === message) {
+          return;
+        }
         fieldState.hasError = hasError;
         fieldState.errorMessage = message;
         if (fieldState.showExternalError) {

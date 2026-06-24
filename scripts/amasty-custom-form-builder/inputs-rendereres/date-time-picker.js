@@ -27,6 +27,7 @@ export default function renderDateTimePicker(input, mountNode, fieldState) {
       error: fieldState.hasError ? fieldState.errorMessage : undefined,
       onChange: (event) => {
         value = event?.target?.value ?? '';
+        fieldState.revalidate();
       },
     })(mountNode);
   };

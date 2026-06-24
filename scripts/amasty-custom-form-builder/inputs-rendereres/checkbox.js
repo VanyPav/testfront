@@ -42,6 +42,7 @@ export default function renderCheckbox(input, mountNode, fieldState) {
         onChange: (event) => {
           const isChecked = Boolean(event?.currentTarget?.checked);
           selectedValues = new Set(isChecked ? ['true'] : []);
+          fieldState.revalidate();
           render();
         },
       })(optionNode);
@@ -73,6 +74,7 @@ export default function renderCheckbox(input, mountNode, fieldState) {
           }
 
           selectedValues = nextValues;
+          fieldState.revalidate();
           render();
         },
       })(optionNode);

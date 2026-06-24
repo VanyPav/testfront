@@ -33,6 +33,7 @@ export default function renderTextarea(input, mountNode, fieldState) {
       errorMessage: fieldState.errorMessage || undefined,
       onChange: (event) => {
         value = event?.target?.value ?? '';
+        fieldState.revalidate();
       },
     })(mountNode);
   };
