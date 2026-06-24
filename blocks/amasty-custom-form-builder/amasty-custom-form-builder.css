@@ -42,6 +42,14 @@
         line-height: 1.4;
     }
 
+    .dropin-textarea.dropin-textarea--error:focus {
+        border-color: var(--color-alert-800);
+    }
+
+    .dropin-textarea.dropin-textarea--error:focus + .dropin-textarea__label--floating {
+        color: var(--color-alert-800);
+    }
+
     .dropin-input-date .dropin-field__hint--error {
         font-size: 1.6rem;
         line-height: 1.4;
