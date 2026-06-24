@@ -26,6 +26,7 @@ export default function renderCheckbox(input, mountNode, fieldState) {
 
   const render = () => {
     const groupNode = document.createElement('div');
+    groupNode.className = 'amasty-custom-form-builder__option-group';
     const fieldName = getFieldName(input);
 
     mountNode.textContent = '';

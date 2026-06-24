@@ -21,6 +21,7 @@ export default function renderRadioButton(input, mountNode, fieldState) {
   const render = () => {
     mountNode.textContent = '';
     const groupNode = document.createElement('div');
+    groupNode.className = 'amasty-custom-form-builder__option-group';
 
     options.forEach((option) => {
       const optionNode = document.createElement('div');
