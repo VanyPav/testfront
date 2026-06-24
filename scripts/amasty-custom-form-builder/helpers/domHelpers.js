@@ -81,6 +81,27 @@ function createElement(tagName, { className, noValidate, hidden } = {}) {
   return element;
 }
 
+const FOCUSABLE_FIELD_SELECTOR = 'input:not([type="hidden"]), select, textarea, button:not([disabled]), [tabindex]:not([tabindex="-1"])';
+
+function focusFirstInvalidField(formElement) {
+  const firstInvalidField = formElement.querySelector('.amasty-custom-form-builder__field--invalid');
+  if (!firstInvalidField) {
+    return;
+  }
+
+  requestAnimationFrame(() => {
+    const focusTarget = firstInvalidField.querySelector(FOCUSABLE_FIELD_SELECTOR);
+
+    if (focusTarget) {
+      focusTarget.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      focusTarget.focus({ preventScroll: true });
+      return;
+    }
+
+    firstInvalidField.scrollIntoView({ behavior: 'smooth', block: 'center' });
+  });
+}
+
 function createFormLayoutNodes() {
   const wrapper = createElement('div', {
     className: 'amasty-custom-form-builder__form',
@@ -118,4 +139,5 @@ export {
   normalizeOptions,
   createElement,
   createFormLayoutNodes,
+  focusFirstInvalidField,
 };

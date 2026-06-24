@@ -30,7 +30,7 @@ export default function renderDropdown(input, mountNode, fieldState) {
     mountNode.textContent = '';
     UI.render(Picker, {
       name: getFieldName(input),
-      placeholder: settings.placeholder || 'Select option',
+      placeholder: 'Please select',
       options: pickerOptions,
       value,
       required: isFieldRequired(input),

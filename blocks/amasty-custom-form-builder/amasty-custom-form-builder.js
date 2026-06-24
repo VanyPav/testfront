@@ -7,7 +7,10 @@
 import { Header, provider as UI } from '@dropins/tools/components.js';
 import { readBlockConfig } from '../../scripts/aem.js';
 import { getCustomFormBuilderData, saveCustomFormBuilderData } from '../../scripts/amasty-custom-form-builder/custom-form-fetch.js';
-import { createFormLayoutNodes } from '../../scripts/amasty-custom-form-builder/helpers/domHelpers.js';
+import {
+  createFormLayoutNodes,
+  focusFirstInvalidField,
+} from '../../scripts/amasty-custom-form-builder/helpers/domHelpers.js';
 import buildSubmissionPayload from '../../scripts/amasty-custom-form-builder/helpers/form-values-resolver.js';
 import { renderInputSettings } from '../../scripts/amasty-custom-form-builder/inputs-renderer.js';
 import renderAlertBanner from '../../scripts/amasty-custom-form-builder/ui-form-elements/alert-banner.js';
@@ -73,6 +76,7 @@ export default async function decorate(block) {
     try {
       const isValid = formState.validateFormFields();
       if (!isValid) {
+        focusFirstInvalidField(formElement);
         return;
       }
 
