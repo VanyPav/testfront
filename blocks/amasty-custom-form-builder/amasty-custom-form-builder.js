@@ -33,10 +33,6 @@ export default async function decorate(block) {
     if (!data || typeof data !== 'object') {
       throw new Error('[amasty-custom-form-builder] Invalid GraphQL response payload.');
     }
-
-    if (!Array.isArray(data.inputSettings)) {
-      throw new Error('[amasty-custom-form-builder] inputSettings must be an array.');
-    }
   } catch (error) {
     console.error(error);
     block.remove();
