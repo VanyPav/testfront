@@ -38,7 +38,6 @@ export default function renderCheckbox(input, mountNode, fieldState) {
         label: getFieldLabel(input),
         checked: selectedValues.has('true'),
         required: false,
-        error: fieldState.hasError,
         onChange: (event) => {
           const isChecked = Boolean(event?.currentTarget?.checked);
           selectedValues = new Set(isChecked ? ['true'] : []);
@@ -61,7 +60,6 @@ export default function renderCheckbox(input, mountNode, fieldState) {
         label: option.label,
         checked: selectedValues.has(normalizeControlValue(option.value)),
         required: false,
-        error: fieldState.hasError,
         onChange: (event) => {
           const isChecked = Boolean(event?.currentTarget?.checked);
           const nextValues = new Set(selectedValues);
@@ -85,9 +83,6 @@ export default function renderCheckbox(input, mountNode, fieldState) {
   };
 
   fieldState.getValue = () => Array.from(selectedValues);
-  fieldState.onErrorChange = () => {
-    render();
-  };
 
   render();
 }

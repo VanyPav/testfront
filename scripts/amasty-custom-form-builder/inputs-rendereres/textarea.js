@@ -18,7 +18,7 @@ export default function renderTextarea(input, mountNode, fieldState) {
   let value = normalizeControlValue(settings.defaultValue);
 
   fieldState.getValue = () => value;
-  fieldState.showExternalError = false;
+  fieldState.showExternalError = true;
 
   const render = () => {
     mountNode.textContent = '';
@@ -29,17 +29,11 @@ export default function renderTextarea(input, mountNode, fieldState) {
       placeholder: settings.placeholder || undefined,
       maxLength: getMaxLength(settings),
       required: isFieldRequired(input),
-      error: fieldState.hasError,
-      errorMessage: fieldState.errorMessage || undefined,
       onChange: (event) => {
         value = event?.target?.value ?? '';
         fieldState.revalidate();
       },
     })(mountNode);
-  };
-
-  fieldState.onErrorChange = () => {
-    render();
   };
 
   render();

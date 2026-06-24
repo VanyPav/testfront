@@ -34,16 +34,11 @@ export default function renderDropdown(input, mountNode, fieldState) {
       options: pickerOptions,
       value,
       required: isFieldRequired(input),
-      error: fieldState.hasError,
       handleSelect: (event) => {
         value = event?.target?.value ?? '';
         fieldState.revalidate();
       },
     })(mountNode);
-  };
-
-  fieldState.onErrorChange = () => {
-    render();
   };
 
   render();

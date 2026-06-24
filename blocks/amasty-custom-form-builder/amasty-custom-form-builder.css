@@ -33,6 +33,17 @@
         color: var(--amasty-custom-form-builder-error-color);
     }
 
+    .amasty-custom-form-builder__field--invalid .dropin-textarea,
+    .amasty-custom-form-builder__field--invalid .dropin-input,
+    .amasty-custom-form-builder__field--invalid .dropin-input-date__input-field {
+        border-color: var(--color-alert-800);
+    }
+
+    .amasty-custom-form-builder__field--invalid .dropin-textarea:focus + .dropin-textarea__label--floating,
+    .amasty-custom-form-builder__field--invalid .dropin-input__label--floating--error {
+        color: var(--color-alert-800);
+    }
+
     .amasty-custom-form-builder__option-group {
         display: flex;
         flex-direction: column;

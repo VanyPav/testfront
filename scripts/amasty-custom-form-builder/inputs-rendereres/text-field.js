@@ -28,17 +28,12 @@ export default function renderTextField(input, mountNode, fieldState, inputType 
       placeholder: settings.placeholder || undefined,
       maxLength: getMaxLength(settings),
       required: isFieldRequired(input),
-      error: fieldState.hasError,
       onValue: (nextValue) => {
         value = nextValue ?? '';
         fieldState.revalidate();
       },
       ...inputProps,
     })(mountNode);
-  };
-
-  fieldState.onErrorChange = () => {
-    render();
   };
 
   render();

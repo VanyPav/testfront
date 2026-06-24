@@ -31,7 +31,6 @@ export default function renderRadioButton(input, mountNode, fieldState) {
         label: option.label,
         checked: normalizeControlValue(selectedValue) === normalizeControlValue(option.value),
         required: false,
-        error: fieldState.hasError,
         onChange: () => {
           selectedValue = option.value;
           fieldState.revalidate();
@@ -45,9 +44,6 @@ export default function renderRadioButton(input, mountNode, fieldState) {
   };
 
   fieldState.getValue = () => selectedValue;
-  fieldState.onErrorChange = () => {
-    render();
-  };
 
   render();
 }
