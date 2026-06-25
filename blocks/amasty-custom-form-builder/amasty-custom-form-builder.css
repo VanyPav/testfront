@@ -116,4 +116,9 @@
         max-width: 100%;
         box-sizing: border-box;
     }
+
+    .amasty-custom-form-builder__field .dropin-input-date__icon {
+        top: 10px;
+        height: 24px;
+    }
 }
