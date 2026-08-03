@@ -14,3 +14,10 @@ scripts/__dropins__/**/*.map
 # Cursor / agent tooling (local only)
 .cursor/
 AGENTS.md
+
+# Claude Code tooling (local only)
+.claude/
+.mcp.json
+CLAUDE.md
+packages/
+scratch/

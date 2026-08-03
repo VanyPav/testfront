@@ -25,7 +25,8 @@
         "website-name": "Main Website"
       },
       "amasty": {
-        "custom-form-builder-endpoint": "https://edge-sandbox-graph.adobe.io/api/dd99356e-fa0d-4f7f-a7c0-34ed9ab6a833/graphql"
+        "custom-form-builder-endpoint": "https://edge-sandbox-graph.adobe.io/api/dd99356e-fa0d-4f7f-a7c0-34ed9ab6a833/graphql",
+        "acart-verify-token-endpoint": "https://3452959-acartrecovery-stage.adobeio-static.net/api/v1/web/amastyAbandonedCartRecovery/verify-cart-token"
       }
     }
   }

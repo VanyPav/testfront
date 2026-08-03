@@ -1,0 +1,23 @@
+/**
+ * @author Amasty Team
+ * @copyright Copyright (c) Amasty (https://www.amasty.com)
+ * @package Abandoned Cart Recovery
+ */
+
+.amcart {
+    .amcart__alert {
+        width: 100%;
+        align-self: stretch;
+    }
+
+    .amcart__alert .dropin-alert-banner {
+        width: 100%;
+        max-width: 100%;
+        box-sizing: border-box;
+    }
+
+    .amcart__form {
+        width: 100%;
+        max-width: 400px;
+    }
+}
