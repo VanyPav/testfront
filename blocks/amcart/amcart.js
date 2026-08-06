@@ -48,14 +48,6 @@ async function goToCart() {
   window.location.href = rootLink(CART_PATH);
 }
 
-async function applyCouponAndGoToCart(couponCode) {
-  if (couponCode) {
-    await Cart.applyCouponsToCart([couponCode], Cart.ApplyCouponsStrategy.REPLACE);
-  }
-
-  await goToCart();
-}
-
 function buildSkippedItemsMessage(skippedItems) {
   return skippedItems.map((item) => item.sku).filter(Boolean).join(', ');
 }
@@ -105,7 +97,7 @@ export default async function decorate(block) {
   }
 
   const {
-    cartId, couponCode, loginRequired, skippedItems = [],
+    cartId, loginRequired, skippedItems = [],
   } = result;
 
   if (loginRequired && !checkIsAuthenticated()) {
@@ -125,8 +117,6 @@ export default async function decorate(block) {
     restoreGuestCart(cartId);
   }
 
-  const continueToCart = () => (loginRequired ? applyCouponAndGoToCart(couponCode) : goToCart());
-
   try {
     if (skippedItems.length > 0) {
       spinner.remove();
@@ -135,13 +125,13 @@ export default async function decorate(block) {
         'warning',
         'Some items could not be restored.',
         buildSkippedItemsMessage(skippedItems),
-        { label: 'Continue to cart', onClick: continueToCart },
+        { label: 'Continue to cart', onClick: goToCart },
       );
 
       return;
     }
 
-    await continueToCart();
+    await goToCart();
   } catch (error) {
     console.error('[amcart] Failed to restore cart.', error);
     spinner.remove();
