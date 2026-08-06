@@ -32,7 +32,7 @@ function buildAlertMessage(heading, description = '') {
   return createVNode('div', null, ...messageParts);
 }
 
-export default function renderAlertBanner(container, type, heading, description = '') {
+export default function renderAlertBanner(container, type, heading, description = '', action = null) {
   const variant = ALERT_VARIANTS[type] || 'warning';
   const iconSource = ALERT_ICON_SOURCES[variant];
 
@@ -45,5 +45,6 @@ export default function renderAlertBanner(container, type, heading, description 
     onDismiss: () => {
       container.textContent = '';
     },
+    ...(action ? { action } : {}),
   })(container);
 }

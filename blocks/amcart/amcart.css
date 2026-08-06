@@ -20,4 +20,14 @@
         width: 100%;
         max-width: 400px;
     }
+
+    .amcart__loader {
+        display: flex;
+        justify-content: center;
+        padding: 24px 0;
+    }
+
+    .amcart__loader:empty {
+        display: none;
+    }
 }
