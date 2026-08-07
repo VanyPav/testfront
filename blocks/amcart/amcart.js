@@ -4,12 +4,10 @@
  * @package Abandoned Cart Recovery
  */
 
-import { SignIn } from '@dropins/storefront-auth/containers/SignIn.js';
-import { render as authRenderer } from '@dropins/storefront-auth/render.js';
 import * as Cart from '@dropins/storefront-cart/api.js';
 import { ProgressSpinner, provider as UI } from '@dropins/tools/components.js';
 import {
-  CUSTOMER_FORGOTPASSWORD_PATH,
+  CUSTOMER_LOGIN_PATH,
   checkIsAuthenticated,
   rootLink,
 } from '../../scripts/commerce.js';
@@ -61,11 +59,8 @@ export default async function decorate(block) {
   const loaderContainer = document.createElement('div');
   loaderContainer.className = 'amcart__loader';
 
-  const formContainer = document.createElement('div');
-  formContainer.className = 'amcart__form';
-
   block.textContent = '';
-  block.append(alertContainer, loaderContainer, formContainer);
+  block.append(alertContainer, loaderContainer);
 
   if (!token) {
     console.error('[amcart] Missing token in URL.');
@@ -101,11 +96,10 @@ export default async function decorate(block) {
   } = result;
 
   if (loginRequired && !checkIsAuthenticated()) {
-    spinner.remove();
-    await authRenderer.render(SignIn, {
-      routeForgotPassword: () => rootLink(CUSTOMER_FORGOTPASSWORD_PATH),
-      routeRedirectOnSignIn: () => `${window.location.pathname}${window.location.search}`,
-    })(formContainer);
+    // Persistent customer cart, coupon already applied at send-time - nothing to restore here
+    // (see acart's `verify-cart-token`), so a plain login redirect is enough; the cart drop-in
+    // picks the customer's cart up on its own once they're signed in.
+    window.location.href = rootLink(CUSTOMER_LOGIN_PATH);
 
     return;
   }

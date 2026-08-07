@@ -16,11 +16,6 @@
         box-sizing: border-box;
     }
 
-    .amcart__form {
-        width: 100%;
-        max-width: 400px;
-    }
-
     .amcart__loader {
         display: flex;
         justify-content: center;
