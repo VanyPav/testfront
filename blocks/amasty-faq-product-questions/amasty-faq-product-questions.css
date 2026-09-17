@@ -5,6 +5,8 @@
  */
 
 .amasty-faq-product-questions {
+    margin-top: var(--spacing-xxbig);
+
     .amasty-faq-product-questions__wrapper {
         display: flex;
         flex-direction: column;
