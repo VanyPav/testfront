@@ -13,6 +13,8 @@
 
     .amasty-faq-product-questions__heading {
         margin: 0;
+        font: var(--type-headline-2-strong-font);
+        letter-spacing: var(--type-headline-2-strong-letter-spacing);
     }
 
     .amasty-faq-product-questions__answer {
