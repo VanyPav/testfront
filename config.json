@@ -26,7 +26,8 @@
       },
       "amasty": {
         "custom-form-builder-endpoint": "https://edge-sandbox-graph.adobe.io/api/dd99356e-fa0d-4f7f-a7c0-34ed9ab6a833/graphql",
-        "acart-verify-token-endpoint": "https://3452959-acartrecovery-stage.adobeio-static.net/api/v1/web/amastyAbandonedCartRecovery/verify-cart-token"
+        "acart-verify-token-endpoint": "https://3452959-acartrecovery-stage.adobeio-static.net/api/v1/web/amastyAbandonedCartRecovery/verify-cart-token",
+        "faq-endpoint": "https://edge-sandbox-graph.adobe.io/api/a38aee44-2a54-4b73-b6f4-6f014d8ac0f6/graphql"
       }
     }
   }

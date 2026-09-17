@@ -1,0 +1,21 @@
+/**
+ * @author Amasty Team
+ * @copyright Copyright (c) Amasty (https://www.amasty.com)
+ * @package FAQ and Product Questions
+ */
+
+.amasty-faq-product-questions {
+    .amasty-faq-product-questions__wrapper {
+        display: flex;
+        flex-direction: column;
+        gap: var(--spacing-medium);
+    }
+
+    .amasty-faq-product-questions__heading {
+        margin: 0;
+    }
+
+    .amasty-faq-product-questions__answer {
+        padding: var(--spacing-small) 0;
+    }
+}
