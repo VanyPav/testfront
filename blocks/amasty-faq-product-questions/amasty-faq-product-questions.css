@@ -31,7 +31,7 @@
         display: flex;
         flex-direction: column;
         gap: var(--spacing-medium);
-        margin-top: var(--spacing-big);
+        margin-top: var(--spacing-medium);
     }
 
     .amasty-faq-ask-form__heading {
