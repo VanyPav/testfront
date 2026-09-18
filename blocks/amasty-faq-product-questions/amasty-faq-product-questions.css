@@ -21,4 +21,78 @@
     .amasty-faq-product-questions__answer {
         padding: var(--spacing-small) 0;
     }
+
+    .amasty-faq-ask-form {
+        display: flex;
+        flex-direction: column;
+        gap: var(--spacing-medium);
+        margin-top: var(--spacing-big);
+    }
+
+    .amasty-faq-ask-form__heading {
+        margin: 0;
+        font: var(--type-body-1-strong-font);
+    }
+
+    .amasty-faq-ask-form__form {
+        display: flex;
+        flex-direction: column;
+        gap: var(--spacing-medium);
+        align-items: flex-start;
+    }
+
+    .amasty-faq-ask-form__fields {
+        display: flex;
+        flex-direction: column;
+        gap: var(--spacing-medium);
+        width: 100%;
+        max-width: 640px;
+    }
+
+    .amasty-faq-ask-form__field-label {
+        margin: 0 0 var(--spacing-xxsmall);
+        font: var(--type-body-2-default-font);
+    }
+
+    .amasty-faq-ask-form__field-label--required::after {
+        content: ' *';
+        color: var(--color-alert-800);
+    }
+
+    .amasty-faq-ask-form__field-error {
+        margin: var(--spacing-xxsmall) 0 0;
+        font: var(--type-details-caption-2-font);
+        color: var(--color-alert-800);
+    }
+
+    /* The honeypot has to be in the layout for a bot to fill it, and out of
+       sight and out of the tab order for everyone else. */
+    .amasty-faq-ask-form__honeypot {
+        position: absolute;
+        width: 1px;
+        height: 1px;
+        margin: -1px;
+        padding: 0;
+        border: 0;
+        overflow: hidden;
+        clip: rect(0 0 0 0);
+        clip-path: inset(50%);
+        white-space: nowrap;
+    }
+
+    .amasty-faq-ask-form__alert {
+        width: 100%;
+        max-width: 640px;
+        align-self: stretch;
+    }
+
+    .amasty-faq-ask-form__alert .dropin-in-line-alert {
+        box-sizing: border-box;
+        width: 100%;
+        max-width: 100%;
+    }
+
+    .amasty-faq-ask-form__alert:empty {
+        display: none;
+    }
 }
