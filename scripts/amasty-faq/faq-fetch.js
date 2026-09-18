@@ -11,14 +11,6 @@ import { SUBMIT_AM_FAQ_QUESTION_MUTATION } from './queries/am-faq-submit-questio
 
 const AUTH_TOKEN_COOKIE = 'auth_dropin_user_token';
 
-/**
- * Carries whatever the mesh told us about a failure, split in two on purpose:
- * `message` is the full technical text and belongs in the console only — it
- * carries the runtime URL, the action path and the raw body. `userMessage` is
- * the one sentence the action itself wrote for the shopper, when it wrote one.
- * `status` is the HTTP status the action answered with — for the submit
- * mutation it is meaningful (400/403/429 are deliberate answers).
- */
 class FaqRequestError extends Error {
   constructor(message, { status, userMessage, graphQlErrors = [] } = {}) {
     super(message);
@@ -44,15 +36,6 @@ function isCustomerSignedIn() {
   return Boolean(getCookie(AUTH_TOKEN_COOKIE));
 }
 
-/**
- * A non-2xx answer from the action reaches us as a GraphQL error, so the status
- * has to be dug out of `extensions`. The shape differs between mesh versions —
- * read every place it is known to appear and give up quietly if it is in none.
- */
-/**
- * The action's own answer for the shopper, as the mesh passes it through. Only
- * this text may reach the UI — `message` on the error never may.
- */
 function readUserMessage(graphQlErrors) {
   return graphQlErrors
     .map((error) => error?.extensions?.responseJson?.error
@@ -98,8 +81,6 @@ async function postGraphQl(query, variables, operationName) {
     body: JSON.stringify({ query, variables, operationName }),
   });
 
-  // A non-2xx answer still carries a GraphQL body, and that body holds the one
-  // sentence meant for the shopper — dig it out before discarding the rest.
   if (!response.ok) {
     const errorText = await response.text();
     const graphQlErrors = parseGraphQlErrors(errorText);

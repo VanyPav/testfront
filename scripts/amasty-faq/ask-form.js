@@ -4,354 +4,25 @@
  * @package FAQ and Product Questions
  */
 
+import { Button, provider as UI } from '@dropins/tools/components.js';
+import { buildSubmitFailureAlert, renderAlert } from './ask-form-alert.js';
 import {
-  Button,
-  Checkbox,
-  Icon,
-  InLineAlert,
-  Input,
-  TextArea,
-  provider as UI,
-} from '@dropins/tools/components.js';
-import { createElement as createVNode } from '@dropins/tools/preact-compat.js';
-import { getCookie } from '@dropins/tools/lib.js';
-import { checkIsAuthenticated, rootLink } from '../commerce.js';
+  CLASS_NAME,
+  createCheckboxField,
+  createHoneypotField,
+  createTextField,
+  focusFirstInvalidField,
+} from './ask-form-fields.js';
+import prefillFromAccount from './ask-form-prefill.js';
+import { TEXT } from './ask-form-text.js';
+import {
+  QUESTION_MAX_LENGTH,
+  validateEmail,
+  validateName,
+  validateQuestion,
+} from './ask-form-validation.js';
 import { createElement } from './dom.js';
-import { FaqRequestError, submitFaqQuestion } from './faq-fetch.js';
-
-const CLASS_NAME = 'amasty-faq-ask-form';
-
-const TEXT = {
-  heading: 'Ask a question',
-  question: 'Your question',
-  questionPlaceholder: 'What would you like to know about this product?',
-  name: 'Your name',
-  email: 'Email',
-  notify: 'Notify me by email when this question is answered',
-  submit: 'Submit question',
-  submitting: 'Sending…',
-  successHeading: 'Thank you!',
-  successDescription: 'Your question has been sent for moderation.',
-  failureHeading: 'Your question was not sent',
-  genericError: 'Something went wrong. Please try again later.',
-  signIn: 'Sign in',
-};
-
-const VALIDATION_TEXT = {
-  questionRequired: 'Please enter your question.',
-  questionTooShort: 'Your question must be at least 10 characters long.',
-  questionTooLong: 'Your question must not exceed 500 characters.',
-  questionHasLink: 'Links are not allowed in a question. Please remove them.',
-  emailInvalid: 'Please enter a valid email address.',
-  emailRequiredForNotify: 'Please enter your email address so we can notify you.',
-  tooLong: 'Please use no more than 255 characters.',
-};
-
-const QUESTION_MIN_LENGTH = 10;
-const QUESTION_MAX_LENGTH = 500;
-const FIELD_MAX_LENGTH = 255;
-const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-const LINK_PATTERN = /(https?:\/\/|www\.)/i;
-const FORBIDDEN_STATUS = 403;
-
-/**
- * Statuses the FAQ action answers with on purpose, with a message written for
- * the shopper. Anything else — a 500, a transport failure, an unrecognised
- * shape — gets the universal message, because its text is not ours to show.
- */
-const USER_FACING_STATUSES = new Set([400, 403, 429]);
-
-const ALERT_ICONS = {
-  success: 'CheckWithCircle',
-  error: 'Warning',
-};
-
-const FOCUSABLE_FIELD_SELECTOR = 'input:not([type="hidden"]), textarea, select';
-
-function focusFirstInvalidField(formElement) {
-  const firstInvalidField = formElement.querySelector(`.${CLASS_NAME}__field--invalid`);
-
-  if (!firstInvalidField) {
-    return;
-  }
-
-  requestAnimationFrame(() => {
-    const focusTarget = firstInvalidField.querySelector(FOCUSABLE_FIELD_SELECTOR);
-
-    if (focusTarget) {
-      focusTarget.scrollIntoView({ behavior: 'smooth', block: 'center' });
-      focusTarget.focus({ preventScroll: true });
-
-      return;
-    }
-
-    firstInvalidField.scrollIntoView({ behavior: 'smooth', block: 'center' });
-  });
-}
-
-function createFieldShell(labelText, { required = false } = {}) {
-  const container = createElement('div', { className: `${CLASS_NAME}__field` });
-  const label = createElement('p', { className: `${CLASS_NAME}__field-label` });
-  const control = createElement('div', { className: `${CLASS_NAME}__field-control` });
-  const errorMessage = createElement('p', { className: `${CLASS_NAME}__field-error` });
-
-  label.textContent = labelText;
-  errorMessage.hidden = true;
-
-  if (required) {
-    label.classList.add(`${CLASS_NAME}__field-label--required`);
-  }
-
-  container.append(label, control, errorMessage);
-
-  return { container, control, errorMessage };
-}
-
-/**
- * The control is rendered once and keeps its value in a closure, the way the
- * custom form builder does it — re-rendering on every keystroke would cost the
- * caret its position.
- */
-function createTextField({
-  name,
-  label,
-  placeholder,
-  required = false,
-  multiline = false,
-  maxLength = FIELD_MAX_LENGTH,
-  validate = () => '',
-}) {
-  const { container, control, errorMessage } = createFieldShell(label, { required });
-  let value = '';
-  let hasError = false;
-
-  /**
-   * The drop-in controls hand their value over through an async callback, so the
-   * closure can still be a keystroke behind when the form is submitted right
-   * after typing. The rendered control is the one source that is never stale.
-   */
-  const readValue = () => control.querySelector('input, textarea')?.value ?? value;
-
-  const setError = (message = '') => {
-    hasError = Boolean(message);
-    errorMessage.textContent = message;
-    errorMessage.hidden = !hasError;
-    container.classList.toggle(`${CLASS_NAME}__field--invalid`, hasError);
-  };
-
-  let isVisible = true;
-
-  const field = {
-    container,
-    getValue: readValue,
-    setError,
-    isVisible: () => isVisible,
-    validate: () => {
-      setError(validate(readValue()));
-
-      return !hasError;
-    },
-  };
-
-  const onChangeValue = (nextValue) => {
-    value = nextValue ?? '';
-
-    if (hasError) {
-      field.validate();
-    }
-  };
-
-  const render = () => {
-    control.textContent = '';
-
-    if (multiline) {
-      UI.render(TextArea, {
-        name,
-        value,
-        placeholder,
-        maxLength,
-        onChange: (event) => onChangeValue(event?.target?.value),
-      })(control);
-
-      return;
-    }
-
-    UI.render(Input, {
-      name,
-      value,
-      placeholder,
-      maxLength,
-      onValue: onChangeValue,
-    })(control);
-  };
-
-  field.reset = () => {
-    value = '';
-    setError('');
-    render();
-  };
-
-  field.setValue = (nextValue) => {
-    value = nextValue ?? '';
-    render();
-  };
-
-  // A hidden field is out of the form as far as the shopper is concerned, so it
-  // must not hold an error that blocks a submit they cannot see the reason for.
-  field.setVisible = (nextVisible) => {
-    isVisible = Boolean(nextVisible);
-    container.classList.toggle(`${CLASS_NAME}__field--hidden`, !isVisible);
-
-    if (!isVisible) {
-      setError('');
-    }
-  };
-
-  render();
-
-  return field;
-}
-
-function createCheckboxField({ name, label, onChange = () => {} }) {
-  const container = createElement('div', { className: `${CLASS_NAME}__field ${CLASS_NAME}__field--checkbox` });
-  let checked = false;
-
-  const render = () => {
-    container.textContent = '';
-
-    UI.render(Checkbox, {
-      name,
-      label,
-      value: 'true',
-      checked,
-      onChange: (event) => {
-        checked = Boolean(event?.currentTarget?.checked);
-        render();
-        onChange(checked);
-      },
-    })(container);
-  };
-
-  render();
-
-  return {
-    container,
-    getValue: () => checked,
-    reset: () => {
-      checked = false;
-      render();
-    },
-  };
-}
-
-/**
- * Visually hidden rather than `type="hidden"`: a hidden input is trivial for a
- * bot to skip, while a field that is in the layout but off-screen gets filled.
- * Hidden from assistive technology and from tab order so no real person meets it.
- */
-function createHoneypotField() {
-  const container = createElement('div', { className: `${CLASS_NAME}__honeypot` });
-  const label = createElement('label');
-  const input = createElement('input');
-
-  input.type = 'text';
-  input.name = 'website';
-  input.id = `${CLASS_NAME}__website`;
-  input.tabIndex = -1;
-  input.autocomplete = 'off';
-
-  label.htmlFor = input.id;
-  label.textContent = 'Website';
-
-  container.setAttribute('aria-hidden', 'true');
-  container.append(label, input);
-
-  return {
-    container,
-    getValue: () => input.value,
-    reset: () => {
-      input.value = '';
-    },
-  };
-}
-
-function renderAlert(container, {
-  type, heading, description, additionalActions,
-}) {
-  container.textContent = '';
-
-  UI.render(InLineAlert, {
-    type,
-    heading,
-    description,
-    additionalActions,
-    icon: createVNode(Icon, { source: ALERT_ICONS[type], size: '24' }),
-    onDismiss: () => {
-      container.textContent = '';
-    },
-  })(container);
-}
-
-function buildSubmitFailureAlert(error) {
-  const status = error instanceof FaqRequestError ? error.status : undefined;
-  // Only a sentence the action wrote for the shopper may be shown, and only for
-  // the statuses where it means something. Everything else — a 500, a transport
-  // failure, a body we could not read — gets the universal message, because the
-  // raw text carries internal URLs and paths.
-  const userMessage = USER_FACING_STATUSES.has(status) ? error.userMessage : '';
-  const description = userMessage || TEXT.genericError;
-  const alert = {
-    type: 'error',
-    heading: TEXT.failureHeading,
-    description,
-  };
-
-  if (status === FORBIDDEN_STATUS) {
-    alert.additionalActions = [{
-      label: TEXT.signIn,
-      onClick: () => {
-        window.location.href = rootLink('/customer/login');
-      },
-    }];
-  }
-
-  return alert;
-}
-
-/**
- * Mirrors the original Magento module, which fills the same two fields from the
- * customer session so a signed-in shopper does not retype what the store knows.
- * Only ever fills a field the shopper has left empty, and a failure is silent to
- * them — an unfilled field is a small loss, an error banner over it is a bigger one.
- */
-async function prefillFromAccount(nameField, emailField) {
-  if (!checkIsAuthenticated()) {
-    return;
-  }
-
-  // The header block reads the same cookie; it holds the first name only, which
-  // is also all the original module prefills.
-  const firstname = getCookie('auth_dropin_firstname');
-
-  if (firstname && !nameField.getValue()) {
-    nameField.setValue(firstname);
-  }
-
-  try {
-    // Paid for by signed-in shoppers only: the account drop-in is not otherwise
-    // part of a product page, and mounting it eagerly would cost every visitor.
-    await import('../initializers/account.js');
-    const { getCustomer } = await import('@dropins/storefront-account/api.js');
-    const customer = await getCustomer();
-    const email = customer?.email;
-
-    if (email && !emailField.getValue()) {
-      emailField.setValue(email);
-    }
-  } catch (error) {
-    console.error('[amasty-faq] Could not prefill the customer email.', error);
-  }
-}
+import { submitFaqQuestion } from './faq-fetch.js';
 
 export default function createAskQuestionForm(sku) {
   const wrapper = createElement('div', { className: CLASS_NAME });
@@ -374,54 +45,18 @@ export default function createAskQuestionForm(sku) {
     required: true,
     multiline: true,
     maxLength: QUESTION_MAX_LENGTH,
-    validate: (value) => {
-      const question = value.trim();
-
-      if (!question) {
-        return VALIDATION_TEXT.questionRequired;
-      }
-
-      if (question.length < QUESTION_MIN_LENGTH) {
-        return VALIDATION_TEXT.questionTooShort;
-      }
-
-      if (question.length > QUESTION_MAX_LENGTH) {
-        return VALIDATION_TEXT.questionTooLong;
-      }
-
-      // The action rejects links outright, so say so here instead of round-tripping.
-      if (LINK_PATTERN.test(question)) {
-        return VALIDATION_TEXT.questionHasLink;
-      }
-
-      return '';
-    },
+    validate: validateQuestion,
   });
   const nameField = createTextField({
     name: 'name',
     label: TEXT.name,
-    validate: (value) => (value.trim().length > FIELD_MAX_LENGTH ? VALIDATION_TEXT.tooLong : ''),
+    validate: validateName,
   });
   const emailField = createTextField({
     name: 'email',
     label: TEXT.email,
-    validate: (value) => {
-      const email = value.trim();
-
-      if (!email) {
-        return wantsNotification ? VALIDATION_TEXT.emailRequiredForNotify : '';
-      }
-
-      if (email.length > FIELD_MAX_LENGTH) {
-        return VALIDATION_TEXT.tooLong;
-      }
-
-      return EMAIL_PATTERN.test(email) ? '' : VALIDATION_TEXT.emailInvalid;
-    },
+    validate: (value) => validateEmail(value, wantsNotification),
   });
-  // The email is only ever stored when the shopper asks to be notified, so the
-  // field appears with the checkbox rather than standing there collecting an
-  // address that would be dropped. Same order as the original module.
   const notifyField = createCheckboxField({
     name: 'notify',
     label: TEXT.notify,
@@ -433,8 +68,6 @@ export default function createAskQuestionForm(sku) {
   const honeypotField = createHoneypotField();
   const validatedFields = [questionField, nameField, emailField];
 
-  // Read at render time, sent back untouched: the action refuses a submit that
-  // arrives sooner than a person could plausibly have typed it.
   let formRenderedAt = Date.now();
   let isSubmitting = false;
 

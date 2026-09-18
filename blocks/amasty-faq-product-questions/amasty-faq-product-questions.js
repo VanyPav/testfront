@@ -12,25 +12,26 @@ import createAskQuestionForm from '../../scripts/amasty-faq/ask-form.js';
 import { createElement } from '../../scripts/amasty-faq/dom.js';
 import { getFaqPdpData, isCustomerSignedIn } from '../../scripts/amasty-faq/faq-fetch.js';
 
-// Verbatim from the original Magento module's own template, deliberately: the
-// port keeps its wording, and like it, offers no link to sign in.
 const GUEST_NOTICE = 'Please, mind that only logged in users can submit questions';
+
+const CLASS_NAMES = {
+  wrapper: 'amasty-faq-product-questions__wrapper',
+  heading: 'amasty-faq-product-questions__heading',
+  accordion: 'amasty-faq-product-questions__accordion',
+  answer: 'amasty-faq-product-questions__answer',
+  guestNotice: 'amasty-faq-product-questions__guest-notice',
+};
 
 function resolveSku() {
   return getSkuFromUrl() || events.lastPayload('pdp/data')?.sku;
 }
 
-/**
- * The server decides this again on submit — hiding the form from a guest is a
- * courtesy, not the gate. When the settings did not arrive at all, show the
- * form: a guest then gets the action's own 403 instead of a missing feature.
- */
 function canAskQuestion(settings) {
   return settings?.allowGuestQuestions !== false || isCustomerSignedIn();
 }
 
 function renderGuestNotice(wrapper) {
-  const notice = createElement('p', { className: 'amasty-faq-product-questions__guest-notice' });
+  const notice = createElement('p', { className: CLASS_NAMES.guestNotice });
 
   notice.textContent = GUEST_NOTICE;
   wrapper.append(notice);
@@ -45,21 +46,21 @@ function buildAccordionSections(items) {
       ariaLabelTitle: item.title,
     },
     createVNode('div', {
-      className: 'amasty-faq-product-questions__answer',
+      className: CLASS_NAMES.answer,
       dangerouslySetInnerHTML: { __html: item.answer || '' },
     }),
   ));
 }
 
 function renderHeading(wrapper, sectionTitle) {
-  const heading = createElement('h2', { className: 'amasty-faq-product-questions__heading' });
+  const heading = createElement('h2', { className: CLASS_NAMES.heading });
 
   heading.textContent = sectionTitle || '';
   wrapper.append(heading);
 }
 
 function renderAccordion(wrapper, items) {
-  const accordionContainer = createElement('div', { className: 'amasty-faq-product-questions__accordion' });
+  const accordionContainer = createElement('div', { className: CLASS_NAMES.accordion });
 
   UI.render(Accordion, { children: buildAccordionSections(items) })(accordionContainer);
 
@@ -90,11 +91,7 @@ export default async function decorate(block) {
   const items = Array.isArray(productQuestions?.items) ? productQuestions.items : [];
   const showAskForm = canAskQuestion(settings);
 
-  // The section stays even with no questions: the form is the only way a first
-  // question can ever appear, and a guest who cannot ask still gets told why.
-  // The heading renders unconditionally too — without it, a lone form or a lone
-  // notice gives the shopper no idea what section they are looking at.
-  const wrapper = createElement('div', { className: 'amasty-faq-product-questions__wrapper' });
+  const wrapper = createElement('div', { className: CLASS_NAMES.wrapper });
 
   renderHeading(wrapper, productQuestions?.sectionTitle);
 
