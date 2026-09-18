@@ -12,6 +12,10 @@ import createAskQuestionForm from '../../scripts/amasty-faq/ask-form.js';
 import { createElement } from '../../scripts/amasty-faq/dom.js';
 import { getFaqPdpData, isCustomerSignedIn } from '../../scripts/amasty-faq/faq-fetch.js';
 
+// Verbatim from the original Magento module's own template, deliberately: the
+// port keeps its wording, and like it, offers no link to sign in.
+const GUEST_NOTICE = 'Please, mind that only logged in users can submit questions';
+
 function resolveSku() {
   return getSkuFromUrl() || events.lastPayload('pdp/data')?.sku;
 }
@@ -23,6 +27,13 @@ function resolveSku() {
  */
 function canAskQuestion(settings) {
   return settings?.allowGuestQuestions !== false || isCustomerSignedIn();
+}
+
+function renderGuestNotice(wrapper) {
+  const notice = createElement('p', { className: 'amasty-faq-product-questions__guest-notice' });
+
+  notice.textContent = GUEST_NOTICE;
+  wrapper.append(notice);
 }
 
 function buildAccordionSections(items) {
@@ -40,15 +51,19 @@ function buildAccordionSections(items) {
   ));
 }
 
-function renderQuestions(wrapper, productQuestions, items) {
+function renderHeading(wrapper, sectionTitle) {
   const heading = createElement('h2', { className: 'amasty-faq-product-questions__heading' });
-  const accordionContainer = createElement('div', { className: 'amasty-faq-product-questions__accordion' });
 
-  heading.textContent = productQuestions.sectionTitle || '';
+  heading.textContent = sectionTitle || '';
+  wrapper.append(heading);
+}
+
+function renderAccordion(wrapper, items) {
+  const accordionContainer = createElement('div', { className: 'amasty-faq-product-questions__accordion' });
 
   UI.render(Accordion, { children: buildAccordionSections(items) })(accordionContainer);
 
-  wrapper.append(heading, accordionContainer);
+  wrapper.append(accordionContainer);
 }
 
 export default async function decorate(block) {
@@ -75,21 +90,22 @@ export default async function decorate(block) {
   const items = Array.isArray(productQuestions?.items) ? productQuestions.items : [];
   const showAskForm = canAskQuestion(settings);
 
-  // Nothing to read and nothing to ask with — the section has no reason to exist.
-  if (items.length === 0 && !showAskForm) {
-    block.remove();
-
-    return;
-  }
-
+  // The section stays even with no questions: the form is the only way a first
+  // question can ever appear, and a guest who cannot ask still gets told why.
+  // The heading renders unconditionally too — without it, a lone form or a lone
+  // notice gives the shopper no idea what section they are looking at.
   const wrapper = createElement('div', { className: 'amasty-faq-product-questions__wrapper' });
 
+  renderHeading(wrapper, productQuestions?.sectionTitle);
+
   if (items.length > 0) {
-    renderQuestions(wrapper, productQuestions, items);
+    renderAccordion(wrapper, items);
   }
 
   if (showAskForm) {
     wrapper.append(createAskQuestionForm(sku));
+  } else {
+    renderGuestNotice(wrapper);
   }
 
   block.textContent = '';

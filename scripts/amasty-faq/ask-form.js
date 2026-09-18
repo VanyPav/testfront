@@ -14,7 +14,8 @@ import {
   provider as UI,
 } from '@dropins/tools/components.js';
 import { createElement as createVNode } from '@dropins/tools/preact-compat.js';
-import { rootLink } from '../commerce.js';
+import { getCookie } from '@dropins/tools/lib.js';
+import { checkIsAuthenticated, rootLink } from '../commerce.js';
 import { createElement } from './dom.js';
 import { FaqRequestError, submitFaqQuestion } from './faq-fetch.js';
 
@@ -138,10 +139,13 @@ function createTextField({
     container.classList.toggle(`${CLASS_NAME}__field--invalid`, hasError);
   };
 
+  let isVisible = true;
+
   const field = {
     container,
     getValue: readValue,
     setError,
+    isVisible: () => isVisible,
     validate: () => {
       setError(validate(readValue()));
 
@@ -187,12 +191,28 @@ function createTextField({
     render();
   };
 
+  field.setValue = (nextValue) => {
+    value = nextValue ?? '';
+    render();
+  };
+
+  // A hidden field is out of the form as far as the shopper is concerned, so it
+  // must not hold an error that blocks a submit they cannot see the reason for.
+  field.setVisible = (nextVisible) => {
+    isVisible = Boolean(nextVisible);
+    container.classList.toggle(`${CLASS_NAME}__field--hidden`, !isVisible);
+
+    if (!isVisible) {
+      setError('');
+    }
+  };
+
   render();
 
   return field;
 }
 
-function createCheckboxField({ name, label }) {
+function createCheckboxField({ name, label, onChange = () => {} }) {
   const container = createElement('div', { className: `${CLASS_NAME}__field ${CLASS_NAME}__field--checkbox` });
   let checked = false;
 
@@ -207,6 +227,7 @@ function createCheckboxField({ name, label }) {
       onChange: (event) => {
         checked = Boolean(event?.currentTarget?.checked);
         render();
+        onChange(checked);
       },
     })(container);
   };
@@ -297,6 +318,41 @@ function buildSubmitFailureAlert(error) {
   return alert;
 }
 
+/**
+ * Mirrors the original Magento module, which fills the same two fields from the
+ * customer session so a signed-in shopper does not retype what the store knows.
+ * Only ever fills a field the shopper has left empty, and a failure is silent to
+ * them — an unfilled field is a small loss, an error banner over it is a bigger one.
+ */
+async function prefillFromAccount(nameField, emailField) {
+  if (!checkIsAuthenticated()) {
+    return;
+  }
+
+  // The header block reads the same cookie; it holds the first name only, which
+  // is also all the original module prefills.
+  const firstname = getCookie('auth_dropin_firstname');
+
+  if (firstname && !nameField.getValue()) {
+    nameField.setValue(firstname);
+  }
+
+  try {
+    // Paid for by signed-in shoppers only: the account drop-in is not otherwise
+    // part of a product page, and mounting it eagerly would cost every visitor.
+    await import('../initializers/account.js');
+    const { getCustomer } = await import('@dropins/storefront-account/api.js');
+    const customer = await getCustomer();
+    const email = customer?.email;
+
+    if (email && !emailField.getValue()) {
+      emailField.setValue(email);
+    }
+  } catch (error) {
+    console.error('[amasty-faq] Could not prefill the customer email.', error);
+  }
+}
+
 export default function createAskQuestionForm(sku) {
   const wrapper = createElement('div', { className: CLASS_NAME });
   const heading = createElement('h3', { className: `${CLASS_NAME}__heading` });
@@ -308,7 +364,9 @@ export default function createAskQuestionForm(sku) {
   heading.textContent = TEXT.heading;
   formElement.noValidate = true;
 
-  const notifyField = createCheckboxField({ name: 'notify', label: TEXT.notify });
+  // Tracked separately from the checkbox field so the email validator can read it
+  // without the two fields having to reference each other in a circle.
+  let wantsNotification = false;
   const questionField = createTextField({
     name: 'title',
     label: TEXT.question,
@@ -351,7 +409,7 @@ export default function createAskQuestionForm(sku) {
       const email = value.trim();
 
       if (!email) {
-        return notifyField.getValue() ? VALIDATION_TEXT.emailRequiredForNotify : '';
+        return wantsNotification ? VALIDATION_TEXT.emailRequiredForNotify : '';
       }
 
       if (email.length > FIELD_MAX_LENGTH) {
@@ -359,6 +417,17 @@ export default function createAskQuestionForm(sku) {
       }
 
       return EMAIL_PATTERN.test(email) ? '' : VALIDATION_TEXT.emailInvalid;
+    },
+  });
+  // The email is only ever stored when the shopper asks to be notified, so the
+  // field appears with the checkbox rather than standing there collecting an
+  // address that would be dropped. Same order as the original module.
+  const notifyField = createCheckboxField({
+    name: 'notify',
+    label: TEXT.notify,
+    onChange: (checked) => {
+      wantsNotification = checked;
+      emailField.setVisible(checked);
     },
   });
   const honeypotField = createHoneypotField();
@@ -389,6 +458,7 @@ export default function createAskQuestionForm(sku) {
     alertContainer.textContent = '';
 
     const isValid = validatedFields
+      .filter((field) => field.isVisible())
       .map((field) => field.validate())
       .every(Boolean);
 
@@ -417,6 +487,8 @@ export default function createAskQuestionForm(sku) {
       }
 
       [...validatedFields, notifyField, honeypotField].forEach((field) => field.reset());
+      wantsNotification = false;
+      emailField.setVisible(false);
       formRenderedAt = Date.now();
 
       renderAlert(alertContainer, {
@@ -435,11 +507,14 @@ export default function createAskQuestionForm(sku) {
 
   renderSubmitButton();
 
+  emailField.setVisible(false);
+  prefillFromAccount(nameField, emailField);
+
   fieldsContainer.append(
     questionField.container,
     nameField.container,
-    emailField.container,
     notifyField.container,
+    emailField.container,
     honeypotField.container,
   );
   formElement.append(fieldsContainer, submitContainer, alertContainer);

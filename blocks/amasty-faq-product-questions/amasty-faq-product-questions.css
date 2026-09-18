@@ -22,6 +22,11 @@
         padding: var(--spacing-small) 0;
     }
 
+    .amasty-faq-product-questions__guest-notice {
+        margin: var(--spacing-big) 0 0;
+        font: var(--type-body-2-default-font);
+    }
+
     .amasty-faq-ask-form {
         display: flex;
         flex-direction: column;
@@ -47,6 +52,10 @@
         gap: var(--spacing-medium);
         width: 100%;
         max-width: 640px;
+    }
+
+    .amasty-faq-ask-form__field--hidden {
+        display: none;
     }
 
     .amasty-faq-ask-form__field-label {
