@@ -74,8 +74,6 @@
         color: var(--color-alert-800);
     }
 
-    /* The honeypot has to be in the layout for a bot to fill it, and out of
-       sight and out of the tab order for everyone else. */
     .amasty-faq-ask-form__honeypot {
         position: absolute;
         width: 1px;
