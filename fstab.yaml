@@ -3,7 +3,7 @@ mountpoints:
     url: https://content.da.live/VanyPav/testfront/
     type: markup
   /faq/:
-    url: https://content.da.live/VanyPav/testfront/
+    url: https://content.da.live/VanyPav/testfront/products/
     type: markup
 
 folders:
