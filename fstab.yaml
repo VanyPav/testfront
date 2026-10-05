@@ -5,4 +5,4 @@ mountpoints:
 
 folders:
   /products/: /products/default
-  /faq-folder-test/: /faq-folder-probe
+  /faq/: /faq/default
