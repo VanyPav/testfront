@@ -15,8 +15,6 @@ export const GET_AM_FAQ_PDP_DATA_QUERY = `
         urlKey
         title
         answer
-        metaTitle
-        metaDescription
         position
         categoryUrlKeys
       }
