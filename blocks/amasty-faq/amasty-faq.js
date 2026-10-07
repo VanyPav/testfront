@@ -8,6 +8,8 @@ import {
   Accordion,
   AccordionSection,
   Button,
+  Skeleton,
+  SkeletonRow,
   provider as UI,
 } from '@dropins/tools/components.js';
 import { createElement as createVNode } from '@dropins/tools/preact-compat.js';
@@ -54,6 +56,7 @@ const CLASS_NAMES = {
   sidebarItem: 'amasty-faq__sidebar-item',
   sidebarItemCurrent: 'amasty-faq__sidebar-item--current',
   content: 'amasty-faq__content',
+  skeleton: 'amasty-faq__skeleton',
   back: 'amasty-faq__back',
   title: 'amasty-faq__title',
   categories: 'amasty-faq__categories',
@@ -319,11 +322,25 @@ function createSidebar(settings, categories, currentCategoryUrlKey) {
   return sidebar;
 }
 
-export default async function decorate(block) {
-  const wrapper = createElement('div', { className: CLASS_NAMES.wrapper });
-  const content = createElement('div', { className: CLASS_NAMES.content });
+function createSkeleton() {
+  const skeleton = createElement('div', { className: CLASS_NAMES.skeleton });
 
-  wrapper.append(content);
+  UI.render(Skeleton, {
+    rowGap: 'medium',
+    children: [
+      createVNode(SkeletonRow, { key: 'title', variant: 'heading', size: 'large' }),
+      createVNode(SkeletonRow, {
+        key: 'rows', size: 'medium', lines: 4, fullWidth: true, multilineGap: 'medium',
+      }),
+    ],
+  })(skeleton);
+
+  return skeleton;
+}
+
+async function renderPage(wrapper, content) {
+  // Rendered off-page and swapped in at once, so the skeleton stays until everything is ready.
+  const view = createElement('div', { className: CLASS_NAMES.content });
 
   try {
     const settings = await getFaqSettings();
@@ -331,22 +348,35 @@ export default async function decorate(block) {
     const categoriesPromise = ROUTES_WITH_SIDEBAR.includes(route.type)
       ? loadSidebarCategories()
       : Promise.resolve([]);
-    const [view, categories] = await Promise.all([
-      RENDERERS[route.type](content, settings, route),
+    const [routeView, categories] = await Promise.all([
+      RENDERERS[route.type](view, settings, route),
       categoriesPromise,
     ]);
 
+    content.replaceWith(view);
+
     // A missing category or question renders "not found", which has no sidebar.
-    if (view && categories.length > 0) {
+    if (routeView && categories.length > 0) {
       wrapper.classList.add(CLASS_NAMES.wrapperWithSidebar);
-      wrapper.append(createSidebar(settings, categories, view.currentCategoryUrlKey));
+      wrapper.append(createSidebar(settings, categories, routeView.currentCategoryUrlKey));
     }
   } catch (error) {
     // The page has nothing else on it, so a failure is shown instead of removing the block.
     console.error('[amasty-faq] Failed to load the FAQ page.', error);
     content.replaceChildren(createText('p', TEXT.loadError, CLASS_NAMES.error));
   }
+}
 
+export default function decorate(block) {
+  const wrapper = createElement('div', { className: CLASS_NAMES.wrapper });
+  const content = createElement('div', { className: CLASS_NAMES.content });
+
+  content.append(createSkeleton());
+  wrapper.append(content);
   block.textContent = '';
   block.append(wrapper);
+
+  // Not awaited on purpose: EDS loads the header and footer only after the first section's
+  // blocks have finished decorating, so waiting for the FAQ API here keeps the page blank.
+  renderPage(wrapper, content);
 }
