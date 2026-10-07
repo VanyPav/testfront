@@ -8,8 +8,15 @@ import { getConfigValue, getHeaders } from '@dropins/tools/lib/aem/configs.js';
 import { getCookie } from '@dropins/tools/lib.js';
 import { GET_AM_FAQ_PDP_DATA_QUERY } from './queries/am-faq-pdp-data.graphql.js';
 import { SUBMIT_AM_FAQ_QUESTION_MUTATION } from './queries/am-faq-submit-question.graphql.js';
+import { GET_AM_FAQ_SETTINGS_QUERY } from './queries/am-faq-settings.graphql.js';
+import { RESOLVE_AM_FAQ_ROUTE_QUERY } from './queries/am-faq-route.graphql.js';
+import { GET_AM_FAQ_CATEGORIES_QUERY } from './queries/am-faq-categories.graphql.js';
+import { GET_AM_FAQ_CATEGORY_QUERY } from './queries/am-faq-category.graphql.js';
+import { GET_AM_FAQ_QUESTION_QUERY } from './queries/am-faq-question.graphql.js';
 
 const AUTH_TOKEN_COOKIE = 'auth_dropin_user_token';
+const SETTINGS_CACHE_KEY = 'amasty-faq:settings';
+const SETTINGS_CACHE_TTL_MS = 5 * 60 * 1000;
 
 class FaqRequestError extends Error {
   constructor(message, { status, userMessage, graphQlErrors = [] } = {}) {
@@ -126,9 +133,74 @@ async function submitFaqQuestion(input) {
   return data.submitAmFaqQuestion ?? null;
 }
 
+function readCachedSettings() {
+  try {
+    const cached = JSON.parse(window.sessionStorage.getItem(SETTINGS_CACHE_KEY));
+
+    return cached?.expiresAt > Date.now() ? cached.settings : null;
+  } catch {
+    return null;
+  }
+}
+
+function writeCachedSettings(settings) {
+  try {
+    window.sessionStorage.setItem(SETTINGS_CACHE_KEY, JSON.stringify({
+      settings,
+      expiresAt: Date.now() + SETTINGS_CACHE_TTL_MS,
+    }));
+  } catch {
+    // Storage unavailable (private mode, quota): settings are simply refetched next time.
+  }
+}
+
+async function getFaqSettings() {
+  const cached = readCachedSettings();
+
+  if (cached) {
+    return cached;
+  }
+
+  const data = await postGraphQl(GET_AM_FAQ_SETTINGS_QUERY, {}, 'GetAmFaqSettings');
+  const settings = data.getAmFaqSettings ?? {};
+
+  writeCachedSettings(settings);
+
+  return settings;
+}
+
+async function resolveFaqRoute(urlKey) {
+  const data = await postGraphQl(RESOLVE_AM_FAQ_ROUTE_QUERY, { urlKey }, 'ResolveAmFaqRoute');
+
+  return data.resolveAmFaqRoute ?? null;
+}
+
+async function getFaqCategories() {
+  const data = await postGraphQl(GET_AM_FAQ_CATEGORIES_QUERY, {}, 'GetAmFaqCategories');
+
+  return data.getAmFaqCategories?.items ?? [];
+}
+
+async function getFaqCategory(urlKey, page) {
+  const data = await postGraphQl(GET_AM_FAQ_CATEGORY_QUERY, { urlKey, page }, 'GetAmFaqCategory');
+
+  return data.getAmFaqCategory ?? null;
+}
+
+async function getFaqQuestion(urlKey) {
+  const data = await postGraphQl(GET_AM_FAQ_QUESTION_QUERY, { urlKey }, 'GetAmFaqQuestion');
+
+  return data.getAmFaqQuestion ?? null;
+}
+
 export {
   FaqRequestError,
+  getFaqCategories,
+  getFaqCategory,
   getFaqPdpData,
+  getFaqQuestion,
+  getFaqSettings,
   isCustomerSignedIn,
+  resolveFaqRoute,
   submitFaqQuestion,
 };

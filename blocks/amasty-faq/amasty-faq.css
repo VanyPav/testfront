@@ -1,0 +1,136 @@
+/**
+ * @author Amasty Team
+ * @copyright Copyright (c) Amasty (https://www.amasty.com)
+ * @package FAQ and Product Questions
+ */
+
+.amasty-faq {
+    /* The FAQ document has nothing above the block, and the first section has no top margin. */
+    padding-top: var(--spacing-xbig);
+
+    .amasty-faq__wrapper {
+        display: flex;
+        flex-direction: column;
+        gap: var(--spacing-big);
+    }
+
+    .amasty-faq__content {
+        display: flex;
+        flex-direction: column;
+        gap: var(--spacing-medium);
+        min-width: 0;
+        max-width: 900px;
+    }
+
+    .amasty-faq__sidebar-title {
+        margin: 0 0 var(--spacing-small);
+        font: var(--type-body-1-strong-font);
+    }
+
+    .amasty-faq__sidebar-list {
+        display: flex;
+        flex-direction: column;
+        gap: var(--spacing-xsmall);
+        margin: 0;
+        padding: 0;
+        list-style: none;
+        font: var(--type-body-1-default-font);
+    }
+
+    .amasty-faq__sidebar-item a {
+        font: inherit;
+    }
+
+    .amasty-faq__sidebar-item--current {
+        font: var(--type-body-1-strong-font);
+    }
+
+    .amasty-faq__back {
+        align-self: flex-start;
+        font: var(--type-body-2-default-font);
+    }
+
+    .amasty-faq__title {
+        margin: 0;
+        font: var(--type-headline-1-font);
+        letter-spacing: var(--type-headline-1-letter-spacing);
+    }
+
+    .amasty-faq__categories {
+        display: flex;
+        flex-direction: column;
+        gap: var(--spacing-small);
+        margin: 0;
+        padding: 0;
+        list-style: none;
+    }
+
+    .amasty-faq__category-link {
+        font: var(--type-body-1-strong-font);
+    }
+
+    .amasty-faq__answer {
+        font: var(--type-body-1-default-font);
+    }
+
+    .amasty-faq__accordion .amasty-faq__answer {
+        padding: var(--spacing-small) 0;
+    }
+
+    .amasty-faq__question-link {
+        display: inline-block;
+        margin-bottom: var(--spacing-small);
+        font: var(--type-body-2-default-font);
+    }
+
+    .amasty-faq__pagination {
+        display: flex;
+        gap: var(--spacing-medium);
+        align-items: center;
+        font: var(--type-body-2-default-font);
+    }
+
+    .amasty-faq__message {
+        margin: 0;
+        font: var(--type-body-1-default-font);
+    }
+
+    .amasty-faq__ask {
+        margin-top: var(--spacing-medium);
+    }
+
+    .amasty-faq__ask-prompt {
+        display: flex;
+        flex-wrap: wrap;
+        gap: var(--spacing-medium);
+        align-items: center;
+    }
+
+    .amasty-faq__ask-prompt-text {
+        margin: 0;
+        font: var(--type-body-1-default-font);
+    }
+
+    .amasty-faq__error {
+        margin: 0;
+        font: var(--type-body-1-default-font);
+        color: var(--color-alert-800);
+    }
+
+    @media (min-width: 900px) {
+        .amasty-faq__wrapper--with-sidebar {
+            display: grid;
+            grid-template-columns: 240px minmax(0, 1fr);
+            align-items: start;
+        }
+
+        /* The sidebar follows the content in the markup, so on mobile it sits below it. */
+        .amasty-faq__wrapper--with-sidebar .amasty-faq__sidebar {
+            grid-area: 1 / 1;
+        }
+
+        .amasty-faq__wrapper--with-sidebar .amasty-faq__content {
+            grid-area: 1 / 2;
+        }
+    }
+}

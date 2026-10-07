@@ -8,6 +8,7 @@ export const TEXT = {
   heading: 'Ask a question',
   question: 'Your question',
   questionPlaceholder: 'What would you like to know about this product?',
+  questionPlaceholderGeneral: 'What would you like to know?',
   name: 'Your name',
   email: 'Email',
   notify: 'Notify me by email when this question is answered',

@@ -5,6 +5,7 @@
  */
 
 import { Button, provider as UI } from '@dropins/tools/components.js';
+import { loadCSS } from '../aem.js';
 import { buildSubmitFailureAlert, renderAlert } from './ask-form-alert.js';
 import {
   CLASS_NAME,
@@ -24,6 +25,16 @@ import {
 import { createElement } from './dom.js';
 import { submitFaqQuestion } from './faq-fetch.js';
 
+// The form is shared by the PDP block and the FAQ page block, so it carries its own styles.
+function loadStyles(wrapper) {
+  wrapper.hidden = true;
+  loadCSS(`${window.hlx.codeBasePath}/scripts/amasty-faq/ask-form.css`)
+    .catch((error) => console.error('[amasty-faq] Failed to load the ask form styles.', error))
+    .finally(() => {
+      wrapper.hidden = false;
+    });
+}
+
 export default function createAskQuestionForm(sku) {
   const wrapper = createElement('div', { className: CLASS_NAME });
   const heading = createElement('h3', { className: `${CLASS_NAME}__heading` });
@@ -41,7 +52,7 @@ export default function createAskQuestionForm(sku) {
   const questionField = createTextField({
     name: 'title',
     label: TEXT.question,
-    placeholder: TEXT.questionPlaceholder,
+    placeholder: sku ? TEXT.questionPlaceholder : TEXT.questionPlaceholderGeneral,
     required: true,
     multiline: true,
     maxLength: QUESTION_MAX_LENGTH,
@@ -152,6 +163,7 @@ export default function createAskQuestionForm(sku) {
   );
   formElement.append(fieldsContainer, submitContainer, alertContainer);
   wrapper.append(heading, formElement);
+  loadStyles(wrapper);
 
   return wrapper;
 }
