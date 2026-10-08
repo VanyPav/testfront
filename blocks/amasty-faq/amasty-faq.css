@@ -107,6 +107,10 @@
         align-items: center;
     }
 
+    .amasty-faq__ask-form {
+        margin-top: var(--spacing-medium);
+    }
+
     .amasty-faq__ask-prompt-text {
         margin: 0;
         font: var(--type-body-1-default-font);

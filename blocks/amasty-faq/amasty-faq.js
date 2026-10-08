@@ -40,6 +40,7 @@ const TEXT = {
   categoriesTitle: 'Categories:',
   askPrompt: 'Did you find what you were looking for?',
   askButton: 'Ask a question',
+  hideAskForm: 'Hide form',
   guestNotice: 'Please, mind that only logged in users can submit questions',
   notFoundTitle: 'Page not found',
   notFoundMessage: 'The question or category you are looking for does not exist or is no longer available.',
@@ -72,6 +73,7 @@ const CLASS_NAMES = {
   ask: 'amasty-faq__ask',
   askPrompt: 'amasty-faq__ask-prompt',
   askPromptText: 'amasty-faq__ask-prompt-text',
+  askFormContainer: 'amasty-faq__ask-form',
 };
 
 function createLink(href, text, className) {
@@ -159,7 +161,8 @@ function canAskQuestion(settings) {
   return settings?.allowGuestQuestions !== false || isCustomerSignedIn();
 }
 
-// As in the original module: a prompt with a button under the questions, which reveals the form.
+// As in the original module: a prompt with a button under the questions, which shows and hides
+// the form. The form is built on the first click and kept while hidden, so a draft survives.
 function createAskSection(settings) {
   const section = createElement('div', { className: CLASS_NAMES.ask });
 
@@ -171,16 +174,37 @@ function createAskSection(settings) {
 
   const prompt = createElement('div', { className: CLASS_NAMES.askPrompt });
   const buttonContainer = createElement('div');
+  // The form toggles its own `hidden` while its styles load, so the toggle lives on a container.
+  const formContainer = createElement('div', { className: CLASS_NAMES.askFormContainer });
+  let button;
+
+  formContainer.hidden = true;
+
+  const toggleForm = () => {
+    if (!formContainer.hasChildNodes()) {
+      formContainer.append(createAskQuestionForm());
+    }
+
+    formContainer.hidden = !formContainer.hidden;
+    button?.setProps((prev) => ({
+      ...prev,
+      children: formContainer.hidden ? TEXT.askButton : TEXT.hideAskForm,
+      'aria-expanded': !formContainer.hidden,
+    }));
+  };
 
   UI.render(Button, {
     type: 'button',
     variant: 'secondary',
     children: TEXT.askButton,
-    onClick: () => prompt.replaceWith(createAskQuestionForm()),
-  })(buttonContainer);
+    'aria-expanded': false,
+    onClick: toggleForm,
+  })(buttonContainer).then((instance) => {
+    button = instance;
+  });
 
   prompt.append(createText('p', TEXT.askPrompt, CLASS_NAMES.askPromptText), buttonContainer);
-  section.append(prompt);
+  section.append(prompt, formContainer);
 
   return section;
 }
