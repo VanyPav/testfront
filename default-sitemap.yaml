@@ -1,5 +1,6 @@
 sitemaps:
   default:
+    origin: https://main--testfront--vanypav.aem.live
     source: /sitemap.json
     destination: /sitemap-content.xml
     lastmod: YYYY-MM-DD

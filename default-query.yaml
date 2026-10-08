@@ -3,11 +3,11 @@ indices:
   sitemap:
     target: /sitemap.json
     exclude:
-      - 'drafts/**'
-      - 'enrichment/**'
-      - 'faq/**'
-      - 'fragments/**'
-      - 'products/**'
+      - '/drafts/**'
+      - '/enrichment/**'
+      - '/faq/**'
+      - '/fragments/**'
+      - '/products/**'
     properties:
       title:
         select: head > meta[property="og:title"]
