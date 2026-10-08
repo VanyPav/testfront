@@ -13,8 +13,7 @@ import { buildFaqPageQuery } from './queries/am-faq-page.graphql.js';
 const AUTH_TOKEN_COOKIE = 'auth_dropin_user_token';
 const SETTINGS_CACHE_KEY = 'amasty-faq:settings';
 const CATEGORIES_CACHE_KEY = 'amasty-faq:categories';
-// One TTL for everything cached: the merchant guide promises admin changes reach the storefront
-// within this time.
+// The merchant guide promises admin changes reach the storefront within this time.
 const CACHE_TTL_MS = 5 * 60 * 1000;
 
 class FaqRequestError extends Error {
@@ -74,8 +73,7 @@ function createGraphQlError(errors) {
   });
 }
 
-// Resolves with whatever data came back and the errors next to it: one failed field does not
-// throw away the fields that did resolve. Only a transport failure rejects.
+// One failed field does not discard the others; only a transport failure rejects.
 async function postGraphQlPartial(query, variables, operationName) {
   const endpoint = getFaqEndpoint();
 
@@ -159,7 +157,7 @@ function writeCached(key, value) {
       expiresAt: Date.now() + CACHE_TTL_MS,
     }));
   } catch {
-    // Storage unavailable (private mode, quota): the value is simply refetched next time.
+    // Storage unavailable (private mode, quota): refetched next time.
   }
 }
 
@@ -171,12 +169,8 @@ function getCachedFaqCategories() {
   return readCached(CATEGORIES_CACHE_KEY);
 }
 
-/**
- * Loads the requested FAQ page fields (`settings`, `categories`, `questions`, `category`,
- * `question`) in one request. Each field comes back as its value or, when that field failed, as
- * `{ error }`, so the caller decides which failures matter: on a category page a failed `question`
- * is irrelevant. Settings and categories are cached on the way.
- */
+// A failed field comes back as `{ error }`, so the caller decides which failures matter: on a
+// category page a failed `question` is irrelevant.
 async function getFaqPageData(fieldNames, { urlKey, page } = {}, operationName = 'GetAmFaqPage') {
   if (fieldNames.length === 0) {
     return {};

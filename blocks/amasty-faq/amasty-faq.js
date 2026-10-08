@@ -101,7 +101,7 @@ function createTitle(text) {
 function createAnswer(html) {
   const answer = createElement('div', { className: CLASS_NAMES.answer });
 
-  // The answer is server-sanitized HTML (see STOREFRONT_HANDOFF.md §2), rendered as is.
+  // Sanitized on the server.
   answer.innerHTML = html || '';
 
   return answer;
@@ -162,8 +162,7 @@ function canAskQuestion(settings) {
   return settings?.allowGuestQuestions !== false || isCustomerSignedIn();
 }
 
-// As in the original module: a prompt with a button under the questions, which shows and hides
-// the form. The form is built on the first click and kept while hidden, so a draft survives.
+// The form is built on the first click and kept while hidden, so a draft survives.
 function createAskSection(settings) {
   const section = createElement('div', { className: CLASS_NAMES.ask });
 
@@ -222,8 +221,7 @@ function createAccordion(settings, items) {
   return accordion;
 }
 
-// Two independent accordions, the first half of the page on the left: stacked on mobile, they
-// still read in the server's order.
+// First half on the left, so the stacked mobile layout keeps the server's order.
 function createAccordionColumns(settings, items) {
   const columns = createElement('div', { className: CLASS_NAMES.accordionColumns });
   const half = Math.ceil(items.length / 2);
@@ -328,7 +326,6 @@ const RENDERERS = {
   [ROUTE_TYPES.notFound]: renderNotFound,
 };
 
-// The sidebar is secondary: without it the page still shows its own content.
 function readSidebarCategories(categories) {
   if (categories?.error) {
     console.error('[amasty-faq] Failed to load the categories sidebar.', categories.error);
@@ -356,8 +353,7 @@ function createSidebar(settings, categories) {
   return sidebar;
 }
 
-// The sidebar can be ready before the content says which category is current, so the current
-// item is marked afterwards: bold text instead of a link.
+// Marked once the content reports the current category; the sidebar may render first.
 function markCurrentCategory(sidebar, urlKey) {
   const item = [...sidebar.querySelectorAll(`.${CLASS_NAMES.sidebarItem}`)]
     .find((element) => element.dataset.urlKey === urlKey);
@@ -384,8 +380,6 @@ function createSkeleton(lines) {
   return skeleton;
 }
 
-// The content and the sidebar are independent requests: a failed content request shows the error
-// in the content column and keeps the sidebar, so the shopper can still move to a category.
 function renderContent(view, settings, path, data) {
   try {
     const route = resolveRoute(path, settings, data);
@@ -408,8 +402,7 @@ function removeSidebar(wrapper, sidebarPlaceholder) {
   wrapper.classList.remove(CLASS_NAMES.wrapperWithSidebar);
 }
 
-// Its column is reserved from the start, so the content does not jump when it arrives. Only a
-// page with no categories loses the column.
+// The column is reserved up front so the content does not shift; it goes only without categories.
 async function renderSidebar(wrapper, sidebarPlaceholder, settings, categoriesPromise) {
   const categories = await categoriesPromise;
 
@@ -435,9 +428,7 @@ async function loadPageData(fieldNames, path, operationName) {
   }
 }
 
-// Two requests leave at once and nothing waits on a request it does not need. The settings travel
-// with the categories, both quick, so the sidebar does not wait on the content; the content
-// request carries only the content.
+// The settings travel with the categories (both quick), so the sidebar never waits on the content.
 async function renderPage(wrapper, content, sidebarPlaceholder) {
   // Rendered off-page and swapped in at once, so the skeleton stays until the content is ready.
   const view = createElement('div', { className: CLASS_NAMES.content });
@@ -458,8 +449,7 @@ async function renderPage(wrapper, content, sidebarPlaceholder) {
   const settings = cachedSettings ?? (await sidebarDataPromise).settings;
 
   if (!settings || settings.error) {
-    // Without settings there is no prefix to build links with, so there is no sidebar either.
-    // The page has nothing else on it, so a failure is shown instead of removing the block.
+    // No prefix to build links with, so the sidebar goes too.
     console.error('[amasty-faq] Failed to load the FAQ settings.', settings?.error);
     removeSidebar(wrapper, sidebarPlaceholder);
     content.replaceChildren(createText('p', TEXT.loadError, CLASS_NAMES.error));
@@ -467,7 +457,6 @@ async function renderPage(wrapper, content, sidebarPlaceholder) {
     return;
   }
 
-  // Each column is shown as soon as its own data is ready, not when both are.
   const categoriesPromise = cachedCategories
     ? Promise.resolve(cachedCategories)
     : sidebarDataPromise.then((data) => readSidebarCategories(data.categories));
@@ -491,7 +480,6 @@ export default function decorate(block) {
   wrapper.classList.add(CLASS_NAMES.wrapperWithSidebar);
   content.append(createSkeleton(4));
   sidebarPlaceholder.append(createSkeleton(3));
-  // The sidebar follows the content in the markup, so on mobile it sits below it.
   wrapper.append(content, sidebarPlaceholder);
   block.textContent = '';
   block.append(wrapper);

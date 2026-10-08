@@ -4,9 +4,8 @@
  * @package FAQ and Product Questions
  */
 
-// The FAQ page asks for what it needs in as few documents as it can, so API Mesh resolves the
-// fields in parallel instead of the page waiting on them one after another. Each field is aliased,
-// and an error in one of them comes back with that alias in its `path`.
+// Fields in one document are resolved by API Mesh in parallel. Each is aliased, so an error in one
+// comes back with that alias in its `path`.
 const FIELDS = {
   settings: {
     variables: [],

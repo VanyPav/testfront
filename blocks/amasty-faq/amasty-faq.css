@@ -5,7 +5,6 @@
  */
 
 .amasty-faq {
-    /* The FAQ document has nothing above the block, and the first section has no top margin. */
     padding-top: var(--spacing-xbig);
 
     .amasty-faq__wrapper {

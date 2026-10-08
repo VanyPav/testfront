@@ -7,8 +7,8 @@
 import { getRootPath } from '@dropins/tools/lib/aem/configs.js';
 
 const DEFAULT_URL_PREFIX = 'faq';
-// The API declares `page` as a GraphQL Int: a larger number fails the whole request, so it is
-// capped here and ends up past the last page, which is "not found".
+// `page` is a GraphQL Int: a larger number fails the whole request. Capped, it lands past the last
+// page, which is "not found".
 const MAX_PAGE = 2 ** 31 - 1;
 
 const ROUTE_TYPES = {
@@ -41,12 +41,9 @@ function readPageNumber(search) {
   return Number.isInteger(page) && page > 0 ? Math.min(page, MAX_PAGE) : 1;
 }
 
-/**
- * Splits the current address into what the FAQ page needs to ask the API for. The page document is
- * the same for every URL under the prefix (folder mapping), so the pathname is the only source of
- * truth. The prefix is only checked later, against the settings: on a first visit they arrive in
- * the same request as the content.
- */
+// Every URL under the prefix serves the same document (folder mapping), so the pathname is the
+// only source of truth. The prefix is checked later: on a first visit the settings arrive with
+// the content.
 function readFaqPath({ pathname, search } = window.location) {
   const [prefix, urlKey, ...rest] = getPathSegments(pathname);
 
@@ -63,8 +60,7 @@ function isFaqPath(path, settings) {
   return path.isFlat && path.prefix === getUrlPrefix(settings);
 }
 
-// Which page fields the address needs, before anything is known about the URL key. A key can be a
-// category or a question, so both are asked for at once instead of resolving the type first.
+// A URL key can be a category or a question, so both are asked for instead of resolving the type.
 function getContentFields(path) {
   if (!path.isFlat) {
     return [];
@@ -83,11 +79,7 @@ function readField(data, name) {
   return value ?? null;
 }
 
-/**
- * Decides what the FAQ page shows from the address and the page data loaded for it. Throws the
- * field's error when the field that decides the page failed; a failure in a field the page turned
- * out not to need is ignored.
- */
+// Throws only when the field that decides the page failed.
 function resolveRoute(path, settings, data) {
   if (!isFaqPath(path, settings)) {
     return { type: ROUTE_TYPES.notFound };
@@ -99,8 +91,7 @@ function resolveRoute(path, settings, data) {
     return { type: ROUTE_TYPES.home, page, result: readField(data, 'questions') };
   }
 
-  // Categories win over questions, as in `resolve-route`: saving refuses a URL key taken by
-  // either, and should a duplicate slip through, the answer is the same on every request.
+  // Categories win over questions, as in `resolve-route`, should a duplicate URL key slip through.
   const category = readField(data, 'category');
 
   if (category?.found) {

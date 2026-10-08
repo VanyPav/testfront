@@ -46,8 +46,7 @@ export default function createAskQuestionForm(sku) {
   heading.textContent = TEXT.heading;
   formElement.noValidate = true;
 
-  // Tracked separately from the checkbox field so the email validator can read it
-  // without the two fields having to reference each other in a circle.
+  // Kept outside the checkbox field so the email validator can read it without a cycle.
   let wantsNotification = false;
   const questionField = createTextField({
     name: 'title',

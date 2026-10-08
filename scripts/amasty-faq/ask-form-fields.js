@@ -66,11 +66,8 @@ export function createTextField({
   let value = '';
   let hasError = false;
 
-  /**
-   * The drop-in controls hand their value over through an async callback, so the
-   * closure can still be a keystroke behind when the form is submitted right
-   * after typing. The rendered control is the one source that is never stale.
-   */
+  // Drop-in controls report their value through a debounced callback, so it can lag behind a
+  // submit right after typing; the rendered control never does.
   const readValue = () => control.querySelector('input, textarea')?.value ?? value;
 
   const setError = (message = '') => {
