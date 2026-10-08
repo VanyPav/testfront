@@ -4,9 +4,9 @@
  * @package FAQ and Product Questions
  */
 
-// The FAQ page asks for everything it needs in one document, so API Mesh resolves the fields in
-// parallel instead of the page waiting on them one after another. Each field is aliased, and an
-// error in one of them comes back with that alias in its `path`.
+// The FAQ page asks for what it needs in as few documents as it can, so API Mesh resolves the
+// fields in parallel instead of the page waiting on them one after another. Each field is aliased,
+// and an error in one of them comes back with that alias in its `path`.
 const FIELDS = {
   settings: {
     variables: [],
@@ -14,6 +14,16 @@ const FIELDS = {
       faqPageTitle
       urlPrefix
       allowGuestQuestions
+    }`,
+  },
+  categories: {
+    variables: [],
+    selection: `categories: getAmFaqCategories {
+      items {
+        urlKey
+        title
+        position
+      }
     }`,
   },
   questions: {
@@ -64,13 +74,13 @@ const FIELDS = {
 };
 
 // GraphQL rejects a declared variable that no field uses, so the declarations follow the fields.
-function buildFaqPageQuery(fieldNames) {
+function buildFaqPageQuery(fieldNames, operationName) {
   const variables = [...new Set(fieldNames.flatMap((name) => FIELDS[name].variables))];
   const declaration = variables.length ? `(${variables.join(', ')})` : '';
   const selections = fieldNames.map((name) => FIELDS[name].selection).join('\n    ');
 
   return `
-  query GetAmFaqPage${declaration} {
+  query ${operationName}${declaration} {
     ${selections}
   }
 `;

@@ -16,8 +16,8 @@ import { createElement as createVNode } from '@dropins/tools/preact-compat.js';
 import createAskQuestionForm from '../../scripts/amasty-faq/ask-form.js';
 import { createElement } from '../../scripts/amasty-faq/dom.js';
 import {
+  getCachedFaqCategories,
   getCachedFaqSettings,
-  getFaqCategories,
   getFaqPageData,
   isCustomerSignedIn,
 } from '../../scripts/amasty-faq/faq-fetch.js';
@@ -328,13 +328,15 @@ const RENDERERS = {
   [ROUTE_TYPES.notFound]: renderNotFound,
 };
 
-function loadSidebarCategories() {
-  // The sidebar is secondary: without it the page still shows its own content.
-  return getFaqCategories().catch((error) => {
-    console.error('[amasty-faq] Failed to load the categories sidebar.', error);
+// The sidebar is secondary: without it the page still shows its own content.
+function readSidebarCategories(categories) {
+  if (categories?.error) {
+    console.error('[amasty-faq] Failed to load the categories sidebar.', categories.error);
 
     return [];
-  });
+  }
+
+  return Array.isArray(categories) ? categories : [];
 }
 
 function createSidebar(settings, categories) {
@@ -425,36 +427,35 @@ async function renderSidebar(wrapper, sidebarPlaceholder, settings, categoriesPr
 }
 
 // Never rejects: a request that failed as a whole is a failure of every field it asked for.
-async function loadPageData(fieldNames, path) {
+async function loadPageData(fieldNames, path, operationName) {
   try {
-    return await getFaqPageData(fieldNames, path);
+    return await getFaqPageData(fieldNames, path, operationName);
   } catch (error) {
     return Object.fromEntries(fieldNames.map((name) => [name, { error }]));
   }
 }
 
-// Nothing waits on a request it does not need: the categories request starts at once, and the
-// settings come from the cache or in the same request as the content.
+// Two requests leave at once and nothing waits on a request it does not need. The settings travel
+// with the categories, both quick, so the sidebar does not wait on the content; the content
+// request carries only the content.
 async function renderPage(wrapper, content, sidebarPlaceholder) {
   // Rendered off-page and swapped in at once, so the skeleton stays until the content is ready.
   const view = createElement('div', { className: CLASS_NAMES.content });
   const path = readFaqPath();
   const cachedSettings = getCachedFaqSettings();
-  const categoriesPromise = loadSidebarCategories();
+  const cachedCategories = getCachedFaqCategories();
+  const sidebarDataPromise = loadPageData(
+    [...(cachedSettings ? [] : ['settings']), ...(cachedCategories ? [] : ['categories'])],
+    {},
+    'GetAmFaqSidebar',
+  );
   // With the settings known, an address outside the prefix needs no content at all. Without them,
   // the content is asked for anyway and the prefix is checked when the settings arrive.
-  const contentFields = !cachedSettings || isFaqPath(path, cachedSettings)
-    ? getContentFields(path)
-    : [];
-  const dataPromise = loadPageData(
-    cachedSettings ? contentFields : ['settings', ...contentFields],
+  const contentDataPromise = loadPageData(
+    !cachedSettings || isFaqPath(path, cachedSettings) ? getContentFields(path) : [],
     path,
   );
-  const cachedSidebarPromise = cachedSettings
-    ? renderSidebar(wrapper, sidebarPlaceholder, cachedSettings, categoriesPromise)
-    : null;
-  const data = await dataPromise;
-  const settings = cachedSettings ?? data.settings;
+  const settings = cachedSettings ?? (await sidebarDataPromise).settings;
 
   if (!settings || settings.error) {
     // Without settings there is no prefix to build links with, so there is no sidebar either.
@@ -467,9 +468,11 @@ async function renderPage(wrapper, content, sidebarPlaceholder) {
   }
 
   // Each column is shown as soon as its own data is ready, not when both are.
-  const sidebarPromise = cachedSidebarPromise
-    ?? renderSidebar(wrapper, sidebarPlaceholder, settings, categoriesPromise);
-  const routeView = renderContent(view, settings, path, data);
+  const categoriesPromise = cachedCategories
+    ? Promise.resolve(cachedCategories)
+    : sidebarDataPromise.then((data) => readSidebarCategories(data.categories));
+  const sidebarPromise = renderSidebar(wrapper, sidebarPlaceholder, settings, categoriesPromise);
+  const routeView = renderContent(view, settings, path, await contentDataPromise);
 
   content.replaceWith(view);
 

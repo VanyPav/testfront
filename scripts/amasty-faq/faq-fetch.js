@@ -8,7 +8,6 @@ import { getConfigValue, getHeaders } from '@dropins/tools/lib/aem/configs.js';
 import { getCookie } from '@dropins/tools/lib.js';
 import { GET_AM_FAQ_PDP_DATA_QUERY } from './queries/am-faq-pdp-data.graphql.js';
 import { SUBMIT_AM_FAQ_QUESTION_MUTATION } from './queries/am-faq-submit-question.graphql.js';
-import { GET_AM_FAQ_CATEGORIES_QUERY } from './queries/am-faq-categories.graphql.js';
 import { buildFaqPageQuery } from './queries/am-faq-page.graphql.js';
 
 const AUTH_TOKEN_COOKIE = 'auth_dropin_user_token';
@@ -168,27 +167,17 @@ function getCachedFaqSettings() {
   return readCached(SETTINGS_CACHE_KEY);
 }
 
-async function getFaqCategories() {
-  const cached = readCached(CATEGORIES_CACHE_KEY);
-
-  if (cached) {
-    return cached;
-  }
-
-  const data = await postGraphQl(GET_AM_FAQ_CATEGORIES_QUERY, {}, 'GetAmFaqCategories');
-  const categories = data.getAmFaqCategories?.items ?? [];
-
-  writeCached(CATEGORIES_CACHE_KEY, categories);
-
-  return categories;
+function getCachedFaqCategories() {
+  return readCached(CATEGORIES_CACHE_KEY);
 }
 
 /**
- * Loads the requested FAQ page fields (`settings`, `questions`, `category`, `question`) in one
- * request. Each field comes back as its value or, when that field failed, as `{ error }`, so the
- * caller decides which failures matter: on a category page a failed `question` is irrelevant.
+ * Loads the requested FAQ page fields (`settings`, `categories`, `questions`, `category`,
+ * `question`) in one request. Each field comes back as its value or, when that field failed, as
+ * `{ error }`, so the caller decides which failures matter: on a category page a failed `question`
+ * is irrelevant. Settings and categories are cached on the way.
  */
-async function getFaqPageData(fieldNames, { urlKey, page } = {}) {
+async function getFaqPageData(fieldNames, { urlKey, page } = {}, operationName = 'GetAmFaqPage') {
   if (fieldNames.length === 0) {
     return {};
   }
@@ -204,9 +193,9 @@ async function getFaqPageData(fieldNames, { urlKey, page } = {}) {
   }
 
   const { data, errors } = await postGraphQlPartial(
-    buildFaqPageQuery(fieldNames),
+    buildFaqPageQuery(fieldNames, operationName),
     variables,
-    'GetAmFaqPage',
+    operationName,
   );
   // An error without a path (a rejected document, say) belongs to every field.
   const result = Object.fromEntries(fieldNames.map((name) => {
@@ -219,13 +208,18 @@ async function getFaqPageData(fieldNames, { urlKey, page } = {}) {
     writeCached(SETTINGS_CACHE_KEY, result.settings);
   }
 
+  if (result.categories && !result.categories.error) {
+    result.categories = result.categories.items ?? [];
+    writeCached(CATEGORIES_CACHE_KEY, result.categories);
+  }
+
   return result;
 }
 
 export {
   FaqRequestError,
+  getCachedFaqCategories,
   getCachedFaqSettings,
-  getFaqCategories,
   getFaqPageData,
   getFaqPdpData,
   isCustomerSignedIn,
