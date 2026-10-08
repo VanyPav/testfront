@@ -13,6 +13,7 @@ import { RESOLVE_AM_FAQ_ROUTE_QUERY } from './queries/am-faq-route.graphql.js';
 import { GET_AM_FAQ_CATEGORIES_QUERY } from './queries/am-faq-categories.graphql.js';
 import { GET_AM_FAQ_CATEGORY_QUERY } from './queries/am-faq-category.graphql.js';
 import { GET_AM_FAQ_QUESTION_QUERY } from './queries/am-faq-question.graphql.js';
+import { GET_AM_FAQ_QUESTIONS_QUERY } from './queries/am-faq-questions.graphql.js';
 
 const AUTH_TOKEN_COOKIE = 'auth_dropin_user_token';
 const SETTINGS_CACHE_KEY = 'amasty-faq:settings';
@@ -193,12 +194,19 @@ async function getFaqQuestion(urlKey) {
   return data.getAmFaqQuestion ?? null;
 }
 
+async function getFaqQuestions(page) {
+  const data = await postGraphQl(GET_AM_FAQ_QUESTIONS_QUERY, { page }, 'GetAmFaqQuestions');
+
+  return data.getAmFaqQuestions ?? null;
+}
+
 export {
   FaqRequestError,
   getFaqCategories,
   getFaqCategory,
   getFaqPdpData,
   getFaqQuestion,
+  getFaqQuestions,
   getFaqSettings,
   isCustomerSignedIn,
   resolveFaqRoute,

@@ -52,7 +52,7 @@ async function resolveRoute(settings, { pathname, search } = window.location) {
   }
 
   if (!urlKey) {
-    return { type: ROUTE_TYPES.home };
+    return { type: ROUTE_TYPES.home, page: readPageNumber(search) };
   }
 
   const route = await resolveFaqRoute(urlKey);
@@ -76,16 +76,23 @@ function buildEntityUrl(settings, urlKey) {
   return `${buildHomeUrl(settings)}${encodeURIComponent(urlKey)}`;
 }
 
-function buildCategoryPageUrl(settings, urlKey, page) {
-  const url = buildEntityUrl(settings, urlKey);
-
+function withPage(url, page) {
   return page > 1 ? `${url}?page=${page}` : url;
+}
+
+function buildHomePageUrl(settings, page) {
+  return withPage(buildHomeUrl(settings), page);
+}
+
+function buildCategoryPageUrl(settings, urlKey, page) {
+  return withPage(buildEntityUrl(settings, urlKey), page);
 }
 
 export {
   ROUTE_TYPES,
   buildCategoryPageUrl,
   buildEntityUrl,
+  buildHomePageUrl,
   buildHomeUrl,
   resolveRoute,
 };

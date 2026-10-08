@@ -19,6 +19,7 @@ import {
   getFaqCategories,
   getFaqCategory,
   getFaqQuestion,
+  getFaqQuestions,
   getFaqSettings,
   isCustomerSignedIn,
 } from '../../scripts/amasty-faq/faq-fetch.js';
@@ -26,13 +27,14 @@ import {
   ROUTE_TYPES,
   buildCategoryPageUrl,
   buildEntityUrl,
+  buildHomePageUrl,
   buildHomeUrl,
   resolveRoute,
 } from '../../scripts/amasty-faq/router.js';
 
 const TEXT = {
   backToFaq: 'Back to FAQ',
-  noCategories: 'There are no questions yet.',
+  noFaqQuestions: 'There are no questions yet.',
   noQuestions: 'There are no questions in this category yet.',
   openQuestion: 'Go to the question page',
   categoriesTitle: 'Categories:',
@@ -59,9 +61,8 @@ const CLASS_NAMES = {
   skeleton: 'amasty-faq__skeleton',
   back: 'amasty-faq__back',
   title: 'amasty-faq__title',
-  categories: 'amasty-faq__categories',
-  categoryLink: 'amasty-faq__category-link',
   accordion: 'amasty-faq__accordion',
+  accordionColumns: 'amasty-faq__accordion-columns',
   answer: 'amasty-faq__answer',
   questionLink: 'amasty-faq__question-link',
   pagination: 'amasty-faq__pagination',
@@ -113,34 +114,6 @@ function setPageTitle(title) {
   }
 }
 
-async function renderHome(wrapper, settings) {
-  const categories = await getFaqCategories();
-
-  setPageTitle(settings.faqPageTitle);
-  wrapper.append(createTitle(settings.faqPageTitle));
-
-  if (categories.length === 0) {
-    wrapper.append(createText('p', TEXT.noCategories, CLASS_NAMES.message));
-
-    return;
-  }
-
-  const list = createElement('ul', { className: CLASS_NAMES.categories });
-
-  categories.forEach((category) => {
-    const item = createElement('li');
-
-    item.append(createLink(
-      buildEntityUrl(settings, category.urlKey),
-      category.title,
-      CLASS_NAMES.categoryLink,
-    ));
-    list.append(item);
-  });
-
-  wrapper.append(list);
-}
-
 function buildAccordionSections(settings, items) {
   return items.map((item) => createVNode(
     AccordionSection,
@@ -164,22 +137,19 @@ function buildAccordionSections(settings, items) {
   ));
 }
 
-function createPagination(settings, { urlKey, page, totalPages }) {
+function createPagination({ page, totalPages, buildPageUrl }) {
   const nav = createElement('nav', { className: CLASS_NAMES.pagination });
 
   nav.setAttribute('aria-label', 'Pagination');
 
   if (page > 1) {
-    nav.append(createLink(
-      buildCategoryPageUrl(settings, urlKey, page - 1),
-      TEXT.previousPage,
-    ));
+    nav.append(createLink(buildPageUrl(page - 1), TEXT.previousPage));
   }
 
   nav.append(createText('span', TEXT.pageOf(page, totalPages), CLASS_NAMES.paginationStatus));
 
   if (page < totalPages) {
-    nav.append(createLink(buildCategoryPageUrl(settings, urlKey, page + 1), TEXT.nextPage));
+    nav.append(createLink(buildPageUrl(page + 1), TEXT.nextPage));
   }
 
   return nav;
@@ -215,6 +185,33 @@ function createAskSection(settings) {
   return section;
 }
 
+function readTotalPages(result) {
+  return Math.max(1, Math.ceil((result.total ?? 0) / (result.pageSize || 1)));
+}
+
+function createAccordion(settings, items) {
+  const accordion = createElement('div', { className: CLASS_NAMES.accordion });
+
+  UI.render(Accordion, { children: buildAccordionSections(settings, items) })(accordion);
+
+  return accordion;
+}
+
+// Two independent accordions, the first half of the page on the left: stacked on mobile, they
+// still read in the server's order.
+function createAccordionColumns(settings, items) {
+  const columns = createElement('div', { className: CLASS_NAMES.accordionColumns });
+  const half = Math.ceil(items.length / 2);
+
+  columns.append(createAccordion(settings, items.slice(0, half)));
+
+  if (items.length > half) {
+    columns.append(createAccordion(settings, items.slice(half)));
+  }
+
+  return columns;
+}
+
 function renderNotFound(wrapper, settings) {
   setPageTitle(settings?.faqPageTitle);
   wrapper.append(
@@ -234,7 +231,7 @@ async function renderCategory(wrapper, settings, { urlKey, page }) {
   }
 
   const items = Array.isArray(result.items) ? result.items : [];
-  const totalPages = Math.max(1, Math.ceil((result.total ?? 0) / (result.pageSize || 1)));
+  const totalPages = readTotalPages(result);
 
   if (page > totalPages) {
     renderNotFound(wrapper, settings);
@@ -248,19 +245,53 @@ async function renderCategory(wrapper, settings, { urlKey, page }) {
   if (items.length === 0) {
     wrapper.append(createText('p', TEXT.noQuestions, CLASS_NAMES.message));
   } else {
-    const accordion = createElement('div', { className: CLASS_NAMES.accordion });
-
-    UI.render(Accordion, { children: buildAccordionSections(settings, items) })(accordion);
-    wrapper.append(accordion);
+    wrapper.append(createAccordion(settings, items));
   }
 
   if (totalPages > 1) {
-    wrapper.append(createPagination(settings, { urlKey, page, totalPages }));
+    wrapper.append(createPagination({
+      page,
+      totalPages,
+      buildPageUrl: (pageNumber) => buildCategoryPageUrl(settings, urlKey, pageNumber),
+    }));
   }
 
   wrapper.append(createAskSection(settings));
 
   return { currentCategoryUrlKey: urlKey };
+}
+
+async function renderHome(wrapper, settings, { page }) {
+  const result = await getFaqQuestions(page);
+  const items = Array.isArray(result?.items) ? result.items : [];
+  const totalPages = readTotalPages(result ?? {});
+
+  if (page > totalPages) {
+    renderNotFound(wrapper, settings);
+
+    return null;
+  }
+
+  setPageTitle(settings.faqPageTitle);
+  wrapper.append(createTitle(settings.faqPageTitle));
+
+  if (items.length === 0) {
+    wrapper.append(createText('p', TEXT.noFaqQuestions, CLASS_NAMES.message));
+  } else {
+    wrapper.append(createAccordionColumns(settings, items));
+  }
+
+  if (totalPages > 1) {
+    wrapper.append(createPagination({
+      page,
+      totalPages,
+      buildPageUrl: (pageNumber) => buildHomePageUrl(settings, pageNumber),
+    }));
+  }
+
+  wrapper.append(createAskSection(settings));
+
+  return { currentCategoryUrlKey: null };
 }
 
 async function renderQuestion(wrapper, settings, { urlKey }) {
@@ -289,7 +320,7 @@ const RENDERERS = {
   [ROUTE_TYPES.notFound]: renderNotFound,
 };
 
-const ROUTES_WITH_SIDEBAR = [ROUTE_TYPES.category, ROUTE_TYPES.question];
+const ROUTES_WITH_SIDEBAR = [ROUTE_TYPES.home, ROUTE_TYPES.category, ROUTE_TYPES.question];
 
 function loadSidebarCategories() {
   // The sidebar is secondary: without it the page still shows its own content.

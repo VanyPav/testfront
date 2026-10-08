@@ -56,17 +56,18 @@
         letter-spacing: var(--type-headline-1-letter-spacing);
     }
 
-    .amasty-faq__categories {
-        display: flex;
-        flex-direction: column;
-        gap: var(--spacing-small);
-        margin: 0;
-        padding: 0;
-        list-style: none;
+    .amasty-faq__accordion-columns {
+        display: grid;
+        grid-template-columns: minmax(0, 1fr);
+        column-gap: var(--spacing-big);
+        align-items: start;
     }
 
-    .amasty-faq__category-link {
-        font: var(--type-body-1-strong-font);
+    /* Stacked on mobile, the columns read as one list: drop the second one's leading divider. */
+    @media (max-width: 899px) {
+        .amasty-faq__accordion + .amasty-faq__accordion .dropin-accordion > .dropin-divider:first-child {
+            display: none;
+        }
     }
 
     .amasty-faq__answer {
@@ -118,6 +119,10 @@
     }
 
     @media (min-width: 900px) {
+        .amasty-faq__accordion-columns {
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+        }
+
         .amasty-faq__wrapper--with-sidebar {
             display: grid;
             grid-template-columns: 240px minmax(0, 1fr);
