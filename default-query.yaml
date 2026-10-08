@@ -5,6 +5,7 @@ indices:
     exclude:
       - 'drafts/**'
       - 'enrichment/**'
+      - 'faq/**'
       - 'fragments/**'
       - 'products/**'
     properties:

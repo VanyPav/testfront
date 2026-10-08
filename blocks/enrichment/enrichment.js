@@ -39,7 +39,10 @@ export default async function decorate(block) {
     const index = await fetchIndex('enrichment/enrichment');
     const matchingFragments = index.data
       .filter((fragment) => Object.keys(filters).every((filterKey) => {
-        const values = JSON.parse(fragment[filterKey]);
+        // A sheet-backed index stores multi-values as a JSON string; a DA site's index serves
+        // them as a real array.
+        const raw = fragment[filterKey];
+        const values = Array.isArray(raw) ? raw : JSON.parse(raw || '[]');
         return values.includes(filters[filterKey]);
       }))
       .map((fragment) => fragment.path);
