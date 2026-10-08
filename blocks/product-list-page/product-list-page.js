@@ -40,6 +40,12 @@ export default async function decorate(block) {
   block.innerHTML = '';
   block.appendChild(fragment);
 
+  // The block's config is gone once it is decorated; blocks that run after it (enrichment) read
+  // the category from here.
+  if (config.urlpath) {
+    block.dataset.urlpath = config.urlpath;
+  }
+
   const categoryPathConfig = config.urlpath ? { categoryPath: config.urlpath } : {};
 
   const getAddToCartButton = (product) => {

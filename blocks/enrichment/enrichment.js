@@ -22,14 +22,15 @@ export default async function decorate(block) {
         throw new Error('No product list page block found');
       }
 
-      let categoryId = plpBlock.dataset?.category;
-      if (!categoryId) {
-        categoryId = readBlockConfig(plpBlock).category;
+      // product-list-page identifies its category by URL path, the custom one by id.
+      const category = plpBlock.dataset?.urlpath
+        || plpBlock.dataset?.category
+        || readBlockConfig(plpBlock).urlpath
+        || readBlockConfig(plpBlock).category;
+      if (!category) {
+        throw new Error('No category found in product list page block');
       }
-      if (!categoryId) {
-        throw new Error('No category ID found in product list page block');
-      }
-      filters.categories = categoryId;
+      filters.categories = category;
     }
 
     if (position) {
