@@ -329,20 +329,15 @@ function loadSidebarCategories() {
   });
 }
 
-function createSidebar(settings, categories, currentCategoryUrlKey) {
+function createSidebar(settings, categories) {
   const sidebar = createElement('aside', { className: CLASS_NAMES.sidebar });
   const list = createElement('ul', { className: CLASS_NAMES.sidebarList });
 
   categories.forEach((category) => {
     const item = createElement('li', { className: CLASS_NAMES.sidebarItem });
 
-    if (category.urlKey === currentCategoryUrlKey) {
-      item.classList.add(CLASS_NAMES.sidebarItemCurrent);
-      item.textContent = category.title;
-    } else {
-      item.append(createLink(buildEntityUrl(settings, category.urlKey), category.title));
-    }
-
+    item.dataset.urlKey = category.urlKey;
+    item.append(createLink(buildEntityUrl(settings, category.urlKey), category.title));
     list.append(item);
   });
 
@@ -351,7 +346,19 @@ function createSidebar(settings, categories, currentCategoryUrlKey) {
   return sidebar;
 }
 
-function createSkeleton() {
+// The sidebar can be ready before the content says which category is current, so the current
+// item is marked afterwards: bold text instead of a link.
+function markCurrentCategory(sidebar, urlKey) {
+  const item = [...sidebar.querySelectorAll(`.${CLASS_NAMES.sidebarItem}`)]
+    .find((element) => element.dataset.urlKey === urlKey);
+
+  if (item) {
+    item.classList.add(CLASS_NAMES.sidebarItemCurrent);
+    item.textContent = item.textContent.trim();
+  }
+}
+
+function createSkeleton(lines) {
   const skeleton = createElement('div', { className: CLASS_NAMES.skeleton });
 
   UI.render(Skeleton, {
@@ -359,7 +366,7 @@ function createSkeleton() {
     children: [
       createVNode(SkeletonRow, { key: 'title', variant: 'heading', size: 'large' }),
       createVNode(SkeletonRow, {
-        key: 'rows', size: 'medium', lines: 4, fullWidth: true, multilineGap: 'medium',
+        key: 'rows', size: 'medium', lines, fullWidth: true, multilineGap: 'medium',
       }),
     ],
   })(skeleton);
@@ -386,8 +393,31 @@ async function renderContent(view, settings) {
   }
 }
 
-async function renderPage(wrapper, content) {
-  // Rendered off-page and swapped in at once, so the skeleton stays until everything is ready.
+function removeSidebar(wrapper, sidebarPlaceholder) {
+  sidebarPlaceholder.remove();
+  wrapper.classList.remove(CLASS_NAMES.wrapperWithSidebar);
+}
+
+// Its column is reserved from the start, so the content does not jump when it arrives. Only a
+// page with no categories loses the column.
+async function renderSidebar(wrapper, sidebarPlaceholder, settings) {
+  const categories = await loadSidebarCategories();
+
+  if (categories.length === 0) {
+    removeSidebar(wrapper, sidebarPlaceholder);
+
+    return null;
+  }
+
+  const sidebar = createSidebar(settings, categories);
+
+  sidebarPlaceholder.replaceWith(sidebar);
+
+  return sidebar;
+}
+
+async function renderPage(wrapper, content, sidebarPlaceholder) {
+  // Rendered off-page and swapped in at once, so the skeleton stays until the content is ready.
   const view = createElement('div', { className: CLASS_NAMES.content });
   let settings;
 
@@ -397,34 +427,39 @@ async function renderPage(wrapper, content) {
     // Without settings there is no prefix to build links with, so there is no sidebar either.
     // The page has nothing else on it, so a failure is shown instead of removing the block.
     console.error('[amasty-faq] Failed to load the FAQ settings.', error);
+    removeSidebar(wrapper, sidebarPlaceholder);
     content.replaceChildren(createText('p', TEXT.loadError, CLASS_NAMES.error));
 
     return;
   }
 
-  const [routeView, categories] = await Promise.all([
-    renderContent(view, settings),
-    loadSidebarCategories(),
-  ]);
+  // Each column is shown as soon as its own data is ready, not when both are.
+  const sidebarPromise = renderSidebar(wrapper, sidebarPlaceholder, settings);
+  const routeView = await renderContent(view, settings);
 
   content.replaceWith(view);
 
-  if (categories.length > 0) {
-    wrapper.classList.add(CLASS_NAMES.wrapperWithSidebar);
-    wrapper.append(createSidebar(settings, categories, routeView?.currentCategoryUrlKey));
+  const sidebar = await sidebarPromise;
+
+  if (sidebar && routeView?.currentCategoryUrlKey) {
+    markCurrentCategory(sidebar, routeView.currentCategoryUrlKey);
   }
 }
 
 export default function decorate(block) {
   const wrapper = createElement('div', { className: CLASS_NAMES.wrapper });
   const content = createElement('div', { className: CLASS_NAMES.content });
+  const sidebarPlaceholder = createElement('aside', { className: CLASS_NAMES.sidebar });
 
-  content.append(createSkeleton());
-  wrapper.append(content);
+  wrapper.classList.add(CLASS_NAMES.wrapperWithSidebar);
+  content.append(createSkeleton(4));
+  sidebarPlaceholder.append(createSkeleton(3));
+  // The sidebar follows the content in the markup, so on mobile it sits below it.
+  wrapper.append(content, sidebarPlaceholder);
   block.textContent = '';
   block.append(wrapper);
 
   // Not awaited on purpose: EDS loads the header and footer only after the first section's
   // blocks have finished decorating, so waiting for the FAQ API here keeps the page blank.
-  renderPage(wrapper, content);
+  renderPage(wrapper, content, sidebarPlaceholder);
 }

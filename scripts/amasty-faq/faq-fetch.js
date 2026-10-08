@@ -17,7 +17,10 @@ import { GET_AM_FAQ_QUESTIONS_QUERY } from './queries/am-faq-questions.graphql.j
 
 const AUTH_TOKEN_COOKIE = 'auth_dropin_user_token';
 const SETTINGS_CACHE_KEY = 'amasty-faq:settings';
-const SETTINGS_CACHE_TTL_MS = 5 * 60 * 1000;
+const CATEGORIES_CACHE_KEY = 'amasty-faq:categories';
+// One TTL for everything cached: the merchant guide promises admin changes reach the storefront
+// within this time.
+const CACHE_TTL_MS = 5 * 60 * 1000;
 
 class FaqRequestError extends Error {
   constructor(message, { status, userMessage, graphQlErrors = [] } = {}) {
@@ -134,29 +137,29 @@ async function submitFaqQuestion(input) {
   return data.submitAmFaqQuestion ?? null;
 }
 
-function readCachedSettings() {
+function readCached(key) {
   try {
-    const cached = JSON.parse(window.sessionStorage.getItem(SETTINGS_CACHE_KEY));
+    const cached = JSON.parse(window.sessionStorage.getItem(key));
 
-    return cached?.expiresAt > Date.now() ? cached.settings : null;
+    return cached?.expiresAt > Date.now() ? cached.value : null;
   } catch {
     return null;
   }
 }
 
-function writeCachedSettings(settings) {
+function writeCached(key, value) {
   try {
-    window.sessionStorage.setItem(SETTINGS_CACHE_KEY, JSON.stringify({
-      settings,
-      expiresAt: Date.now() + SETTINGS_CACHE_TTL_MS,
+    window.sessionStorage.setItem(key, JSON.stringify({
+      value,
+      expiresAt: Date.now() + CACHE_TTL_MS,
     }));
   } catch {
-    // Storage unavailable (private mode, quota): settings are simply refetched next time.
+    // Storage unavailable (private mode, quota): the value is simply refetched next time.
   }
 }
 
 async function getFaqSettings() {
-  const cached = readCachedSettings();
+  const cached = readCached(SETTINGS_CACHE_KEY);
 
   if (cached) {
     return cached;
@@ -165,7 +168,7 @@ async function getFaqSettings() {
   const data = await postGraphQl(GET_AM_FAQ_SETTINGS_QUERY, {}, 'GetAmFaqSettings');
   const settings = data.getAmFaqSettings ?? {};
 
-  writeCachedSettings(settings);
+  writeCached(SETTINGS_CACHE_KEY, settings);
 
   return settings;
 }
@@ -177,9 +180,18 @@ async function resolveFaqRoute(urlKey) {
 }
 
 async function getFaqCategories() {
-  const data = await postGraphQl(GET_AM_FAQ_CATEGORIES_QUERY, {}, 'GetAmFaqCategories');
+  const cached = readCached(CATEGORIES_CACHE_KEY);
 
-  return data.getAmFaqCategories?.items ?? [];
+  if (cached) {
+    return cached;
+  }
+
+  const data = await postGraphQl(GET_AM_FAQ_CATEGORIES_QUERY, {}, 'GetAmFaqCategories');
+  const categories = data.getAmFaqCategories?.items ?? [];
+
+  writeCached(CATEGORIES_CACHE_KEY, categories);
+
+  return categories;
 }
 
 async function getFaqCategory(urlKey, page) {
