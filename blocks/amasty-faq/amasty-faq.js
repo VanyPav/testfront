@@ -16,11 +16,9 @@ import { createElement as createVNode } from '@dropins/tools/preact-compat.js';
 import createAskQuestionForm from '../../scripts/amasty-faq/ask-form.js';
 import { createElement } from '../../scripts/amasty-faq/dom.js';
 import {
+  getCachedFaqSettings,
   getFaqCategories,
-  getFaqCategory,
-  getFaqQuestion,
-  getFaqQuestions,
-  getFaqSettings,
+  getFaqPageData,
   isCustomerSignedIn,
 } from '../../scripts/amasty-faq/faq-fetch.js';
 import {
@@ -29,6 +27,9 @@ import {
   buildEntityUrl,
   buildHomePageUrl,
   buildHomeUrl,
+  getContentFields,
+  isFaqPath,
+  readFaqPath,
   resolveRoute,
 } from '../../scripts/amasty-faq/router.js';
 
@@ -245,15 +246,7 @@ function renderNotFound(wrapper, settings) {
   );
 }
 
-async function renderCategory(wrapper, settings, { urlKey, page }) {
-  const result = await getFaqCategory(urlKey, page);
-
-  if (!result?.found) {
-    renderNotFound(wrapper, settings);
-
-    return null;
-  }
-
+function renderCategory(wrapper, settings, { urlKey, page, result }) {
   const items = Array.isArray(result.items) ? result.items : [];
   const totalPages = readTotalPages(result);
 
@@ -285,8 +278,7 @@ async function renderCategory(wrapper, settings, { urlKey, page }) {
   return { currentCategoryUrlKey: urlKey };
 }
 
-async function renderHome(wrapper, settings, { page }) {
-  const result = await getFaqQuestions(page);
+function renderHome(wrapper, settings, { page, result }) {
   const items = Array.isArray(result?.items) ? result.items : [];
   const totalPages = readTotalPages(result ?? {});
 
@@ -318,15 +310,7 @@ async function renderHome(wrapper, settings, { page }) {
   return { currentCategoryUrlKey: null };
 }
 
-async function renderQuestion(wrapper, settings, { urlKey }) {
-  const result = await getFaqQuestion(urlKey);
-
-  if (!result?.found) {
-    renderNotFound(wrapper, settings);
-
-    return null;
-  }
-
+function renderQuestion(wrapper, settings, { result }) {
   setPageTitle(result.question?.title);
   wrapper.append(
     createBackLink(settings),
@@ -400,11 +384,11 @@ function createSkeleton(lines) {
 
 // The content and the sidebar are independent requests: a failed content request shows the error
 // in the content column and keeps the sidebar, so the shopper can still move to a category.
-async function renderContent(view, settings) {
+function renderContent(view, settings, path, data) {
   try {
-    const route = await resolveRoute(settings);
+    const route = resolveRoute(path, settings, data);
 
-    return await RENDERERS[route.type](view, settings, route);
+    return RENDERERS[route.type](view, settings, route);
   } catch (error) {
     console.error('[amasty-faq] Failed to load the FAQ content.', error);
     setPageTitle(settings.faqPageTitle);
@@ -424,8 +408,8 @@ function removeSidebar(wrapper, sidebarPlaceholder) {
 
 // Its column is reserved from the start, so the content does not jump when it arrives. Only a
 // page with no categories loses the column.
-async function renderSidebar(wrapper, sidebarPlaceholder, settings) {
-  const categories = await loadSidebarCategories();
+async function renderSidebar(wrapper, sidebarPlaceholder, settings, categoriesPromise) {
+  const categories = await categoriesPromise;
 
   if (categories.length === 0) {
     removeSidebar(wrapper, sidebarPlaceholder);
@@ -440,17 +424,42 @@ async function renderSidebar(wrapper, sidebarPlaceholder, settings) {
   return sidebar;
 }
 
+// Never rejects: a request that failed as a whole is a failure of every field it asked for.
+async function loadPageData(fieldNames, path) {
+  try {
+    return await getFaqPageData(fieldNames, path);
+  } catch (error) {
+    return Object.fromEntries(fieldNames.map((name) => [name, { error }]));
+  }
+}
+
+// Nothing waits on a request it does not need: the categories request starts at once, and the
+// settings come from the cache or in the same request as the content.
 async function renderPage(wrapper, content, sidebarPlaceholder) {
   // Rendered off-page and swapped in at once, so the skeleton stays until the content is ready.
   const view = createElement('div', { className: CLASS_NAMES.content });
-  let settings;
+  const path = readFaqPath();
+  const cachedSettings = getCachedFaqSettings();
+  const categoriesPromise = loadSidebarCategories();
+  // With the settings known, an address outside the prefix needs no content at all. Without them,
+  // the content is asked for anyway and the prefix is checked when the settings arrive.
+  const contentFields = !cachedSettings || isFaqPath(path, cachedSettings)
+    ? getContentFields(path)
+    : [];
+  const dataPromise = loadPageData(
+    cachedSettings ? contentFields : ['settings', ...contentFields],
+    path,
+  );
+  const cachedSidebarPromise = cachedSettings
+    ? renderSidebar(wrapper, sidebarPlaceholder, cachedSettings, categoriesPromise)
+    : null;
+  const data = await dataPromise;
+  const settings = cachedSettings ?? data.settings;
 
-  try {
-    settings = await getFaqSettings();
-  } catch (error) {
+  if (!settings || settings.error) {
     // Without settings there is no prefix to build links with, so there is no sidebar either.
     // The page has nothing else on it, so a failure is shown instead of removing the block.
-    console.error('[amasty-faq] Failed to load the FAQ settings.', error);
+    console.error('[amasty-faq] Failed to load the FAQ settings.', settings?.error);
     removeSidebar(wrapper, sidebarPlaceholder);
     content.replaceChildren(createText('p', TEXT.loadError, CLASS_NAMES.error));
 
@@ -458,8 +467,9 @@ async function renderPage(wrapper, content, sidebarPlaceholder) {
   }
 
   // Each column is shown as soon as its own data is ready, not when both are.
-  const sidebarPromise = renderSidebar(wrapper, sidebarPlaceholder, settings);
-  const routeView = await renderContent(view, settings);
+  const sidebarPromise = cachedSidebarPromise
+    ?? renderSidebar(wrapper, sidebarPlaceholder, settings, categoriesPromise);
+  const routeView = renderContent(view, settings, path, data);
 
   content.replaceWith(view);
 

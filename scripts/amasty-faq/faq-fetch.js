@@ -8,12 +8,8 @@ import { getConfigValue, getHeaders } from '@dropins/tools/lib/aem/configs.js';
 import { getCookie } from '@dropins/tools/lib.js';
 import { GET_AM_FAQ_PDP_DATA_QUERY } from './queries/am-faq-pdp-data.graphql.js';
 import { SUBMIT_AM_FAQ_QUESTION_MUTATION } from './queries/am-faq-submit-question.graphql.js';
-import { GET_AM_FAQ_SETTINGS_QUERY } from './queries/am-faq-settings.graphql.js';
-import { RESOLVE_AM_FAQ_ROUTE_QUERY } from './queries/am-faq-route.graphql.js';
 import { GET_AM_FAQ_CATEGORIES_QUERY } from './queries/am-faq-categories.graphql.js';
-import { GET_AM_FAQ_CATEGORY_QUERY } from './queries/am-faq-category.graphql.js';
-import { GET_AM_FAQ_QUESTION_QUERY } from './queries/am-faq-question.graphql.js';
-import { GET_AM_FAQ_QUESTIONS_QUERY } from './queries/am-faq-questions.graphql.js';
+import { buildFaqPageQuery } from './queries/am-faq-page.graphql.js';
 
 const AUTH_TOKEN_COOKIE = 'auth_dropin_user_token';
 const SETTINGS_CACHE_KEY = 'amasty-faq:settings';
@@ -71,7 +67,17 @@ function readErrorStatus(graphQlErrors) {
     .find((status) => Number.isInteger(status));
 }
 
-async function postGraphQl(query, variables, operationName) {
+function createGraphQlError(errors) {
+  return new FaqRequestError(errors.map((error) => error.message).join('; '), {
+    status: readErrorStatus(errors),
+    userMessage: readUserMessage(errors),
+    graphQlErrors: errors,
+  });
+}
+
+// Resolves with whatever data came back and the errors next to it: one failed field does not
+// throw away the fields that did resolve. Only a transport failure rejects.
+async function postGraphQlPartial(query, variables, operationName) {
   const endpoint = getFaqEndpoint();
 
   if (!endpoint) {
@@ -105,17 +111,17 @@ async function postGraphQl(query, variables, operationName) {
 
   const payload = await response.json();
 
-  if (payload.errors?.length) {
-    const message = payload.errors.map((error) => error.message).join('; ');
+  return { data: payload.data ?? {}, errors: payload.errors ?? [] };
+}
 
-    throw new FaqRequestError(message, {
-      status: readErrorStatus(payload.errors),
-      userMessage: readUserMessage(payload.errors),
-      graphQlErrors: payload.errors,
-    });
+async function postGraphQl(query, variables, operationName) {
+  const { data, errors } = await postGraphQlPartial(query, variables, operationName);
+
+  if (errors.length) {
+    throw createGraphQlError(errors);
   }
 
-  return payload.data ?? {};
+  return data;
 }
 
 async function getFaqPdpData(sku) {
@@ -158,25 +164,8 @@ function writeCached(key, value) {
   }
 }
 
-async function getFaqSettings() {
-  const cached = readCached(SETTINGS_CACHE_KEY);
-
-  if (cached) {
-    return cached;
-  }
-
-  const data = await postGraphQl(GET_AM_FAQ_SETTINGS_QUERY, {}, 'GetAmFaqSettings');
-  const settings = data.getAmFaqSettings ?? {};
-
-  writeCached(SETTINGS_CACHE_KEY, settings);
-
-  return settings;
-}
-
-async function resolveFaqRoute(urlKey) {
-  const data = await postGraphQl(RESOLVE_AM_FAQ_ROUTE_QUERY, { urlKey }, 'ResolveAmFaqRoute');
-
-  return data.resolveAmFaqRoute ?? null;
+function getCachedFaqSettings() {
+  return readCached(SETTINGS_CACHE_KEY);
 }
 
 async function getFaqCategories() {
@@ -194,33 +183,51 @@ async function getFaqCategories() {
   return categories;
 }
 
-async function getFaqCategory(urlKey, page) {
-  const data = await postGraphQl(GET_AM_FAQ_CATEGORY_QUERY, { urlKey, page }, 'GetAmFaqCategory');
+/**
+ * Loads the requested FAQ page fields (`settings`, `questions`, `category`, `question`) in one
+ * request. Each field comes back as its value or, when that field failed, as `{ error }`, so the
+ * caller decides which failures matter: on a category page a failed `question` is irrelevant.
+ */
+async function getFaqPageData(fieldNames, { urlKey, page } = {}) {
+  if (fieldNames.length === 0) {
+    return {};
+  }
 
-  return data.getAmFaqCategory ?? null;
-}
+  const variables = {};
 
-async function getFaqQuestion(urlKey) {
-  const data = await postGraphQl(GET_AM_FAQ_QUESTION_QUERY, { urlKey }, 'GetAmFaqQuestion');
+  if (fieldNames.includes('category') || fieldNames.includes('question')) {
+    variables.urlKey = urlKey;
+  }
 
-  return data.getAmFaqQuestion ?? null;
-}
+  if (fieldNames.includes('category') || fieldNames.includes('questions')) {
+    variables.page = page;
+  }
 
-async function getFaqQuestions(page) {
-  const data = await postGraphQl(GET_AM_FAQ_QUESTIONS_QUERY, { page }, 'GetAmFaqQuestions');
+  const { data, errors } = await postGraphQlPartial(
+    buildFaqPageQuery(fieldNames),
+    variables,
+    'GetAmFaqPage',
+  );
+  // An error without a path (a rejected document, say) belongs to every field.
+  const result = Object.fromEntries(fieldNames.map((name) => {
+    const fieldErrors = errors.filter((error) => !error.path || error.path[0] === name);
 
-  return data.getAmFaqQuestions ?? null;
+    return [name, fieldErrors.length ? { error: createGraphQlError(fieldErrors) } : data[name]];
+  }));
+
+  if (result.settings && !result.settings.error) {
+    writeCached(SETTINGS_CACHE_KEY, result.settings);
+  }
+
+  return result;
 }
 
 export {
   FaqRequestError,
+  getCachedFaqSettings,
   getFaqCategories,
-  getFaqCategory,
+  getFaqPageData,
   getFaqPdpData,
-  getFaqQuestion,
-  getFaqQuestions,
-  getFaqSettings,
   isCustomerSignedIn,
-  resolveFaqRoute,
   submitFaqQuestion,
 };
