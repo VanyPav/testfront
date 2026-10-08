@@ -320,8 +320,6 @@ const RENDERERS = {
   [ROUTE_TYPES.notFound]: renderNotFound,
 };
 
-const ROUTES_WITH_SIDEBAR = [ROUTE_TYPES.home, ROUTE_TYPES.category, ROUTE_TYPES.question];
-
 function loadSidebarCategories() {
   // The sidebar is secondary: without it the page still shows its own content.
   return getFaqCategories().catch((error) => {
@@ -369,32 +367,51 @@ function createSkeleton() {
   return skeleton;
 }
 
+// The content and the sidebar are independent requests: a failed content request shows the error
+// in the content column and keeps the sidebar, so the shopper can still move to a category.
+async function renderContent(view, settings) {
+  try {
+    const route = await resolveRoute(settings);
+
+    return await RENDERERS[route.type](view, settings, route);
+  } catch (error) {
+    console.error('[amasty-faq] Failed to load the FAQ content.', error);
+    setPageTitle(settings.faqPageTitle);
+    view.replaceChildren(
+      createTitle(settings.faqPageTitle),
+      createText('p', TEXT.loadError, CLASS_NAMES.error),
+    );
+
+    return null;
+  }
+}
+
 async function renderPage(wrapper, content) {
   // Rendered off-page and swapped in at once, so the skeleton stays until everything is ready.
   const view = createElement('div', { className: CLASS_NAMES.content });
+  let settings;
 
   try {
-    const settings = await getFaqSettings();
-    const route = await resolveRoute(settings);
-    const categoriesPromise = ROUTES_WITH_SIDEBAR.includes(route.type)
-      ? loadSidebarCategories()
-      : Promise.resolve([]);
-    const [routeView, categories] = await Promise.all([
-      RENDERERS[route.type](view, settings, route),
-      categoriesPromise,
-    ]);
-
-    content.replaceWith(view);
-
-    // A missing category or question renders "not found", which has no sidebar.
-    if (routeView && categories.length > 0) {
-      wrapper.classList.add(CLASS_NAMES.wrapperWithSidebar);
-      wrapper.append(createSidebar(settings, categories, routeView.currentCategoryUrlKey));
-    }
+    settings = await getFaqSettings();
   } catch (error) {
+    // Without settings there is no prefix to build links with, so there is no sidebar either.
     // The page has nothing else on it, so a failure is shown instead of removing the block.
-    console.error('[amasty-faq] Failed to load the FAQ page.', error);
+    console.error('[amasty-faq] Failed to load the FAQ settings.', error);
     content.replaceChildren(createText('p', TEXT.loadError, CLASS_NAMES.error));
+
+    return;
+  }
+
+  const [routeView, categories] = await Promise.all([
+    renderContent(view, settings),
+    loadSidebarCategories(),
+  ]);
+
+  content.replaceWith(view);
+
+  if (categories.length > 0) {
+    wrapper.classList.add(CLASS_NAMES.wrapperWithSidebar);
+    wrapper.append(createSidebar(settings, categories, routeView?.currentCategoryUrlKey));
   }
 }
 
