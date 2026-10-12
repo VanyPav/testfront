@@ -8,8 +8,8 @@ import { Accordion, AccordionSection, provider as UI } from '@dropins/tools/comp
 import { createElement as createVNode } from '@dropins/tools/preact-compat.js';
 import { events } from '@dropins/tools/event-bus.js';
 import { getSkuFromUrl } from '../../scripts/commerce.js';
-import createAskQuestionForm from '../../scripts/amasty-faq/ask-form.js';
-import { createElement } from '../../scripts/amasty-faq/dom.js';
+import createAskQuestionForm from '../../scripts/amasty-faq/ask-form/ask-form.js';
+import { createElement } from '../../scripts/amasty-faq/helpers/dom.js';
 import { getFaqPdpData, isCustomerSignedIn } from '../../scripts/amasty-faq/faq-fetch.js';
 
 const GUEST_NOTICE = 'Please, mind that only logged in users can submit questions';

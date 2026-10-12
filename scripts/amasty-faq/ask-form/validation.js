@@ -4,7 +4,7 @@
  * @package FAQ and Product Questions
  */
 
-import { VALIDATION_TEXT } from './ask-form-text.js';
+import { VALIDATION_TEXT } from './text.js';
 
 export const QUESTION_MIN_LENGTH = 10;
 export const QUESTION_MAX_LENGTH = 500;

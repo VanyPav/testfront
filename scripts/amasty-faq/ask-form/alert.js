@@ -6,9 +6,9 @@
 
 import { Icon, InLineAlert, provider as UI } from '@dropins/tools/components.js';
 import { createElement as createVNode } from '@dropins/tools/preact-compat.js';
-import { rootLink } from '../commerce.js';
-import { FaqRequestError } from './faq-fetch.js';
-import { TEXT } from './ask-form-text.js';
+import { rootLink } from '../../commerce.js';
+import { FaqRequestError } from '../faq-fetch.js';
+import { TEXT } from './text.js';
 
 const FORBIDDEN_STATUS = 403;
 const USER_FACING_STATUSES = new Set([400, 403, 429]);

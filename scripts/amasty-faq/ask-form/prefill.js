@@ -5,7 +5,7 @@
  */
 
 import { getCookie } from '@dropins/tools/lib.js';
-import { checkIsAuthenticated } from '../commerce.js';
+import { checkIsAuthenticated } from '../../commerce.js';
 
 export default async function prefillFromAccount(nameField, emailField) {
   if (!checkIsAuthenticated()) {
@@ -19,7 +19,7 @@ export default async function prefillFromAccount(nameField, emailField) {
   }
 
   try {
-    await import('../initializers/account.js');
+    await import('../../initializers/account.js');
     const { getCustomer } = await import('@dropins/storefront-account/api.js');
     const customer = await getCustomer();
     const email = customer?.email;

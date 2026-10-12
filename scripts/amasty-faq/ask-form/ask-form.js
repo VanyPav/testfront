@@ -5,30 +5,30 @@
  */
 
 import { Button, provider as UI } from '@dropins/tools/components.js';
-import { loadCSS } from '../aem.js';
-import { buildSubmitFailureAlert, renderAlert } from './ask-form-alert.js';
+import { loadCSS } from '../../aem.js';
+import { buildSubmitFailureAlert, renderAlert } from './alert.js';
 import {
   CLASS_NAME,
   createCheckboxField,
   createHoneypotField,
   createTextField,
   focusFirstInvalidField,
-} from './ask-form-fields.js';
-import prefillFromAccount from './ask-form-prefill.js';
-import { TEXT } from './ask-form-text.js';
+} from './fields.js';
+import prefillFromAccount from './prefill.js';
+import { TEXT } from './text.js';
 import {
   QUESTION_MAX_LENGTH,
   validateEmail,
   validateName,
   validateQuestion,
-} from './ask-form-validation.js';
-import { createElement } from './dom.js';
-import { submitFaqQuestion } from './faq-fetch.js';
+} from './validation.js';
+import { createElement } from '../helpers/dom.js';
+import { submitFaqQuestion } from '../faq-fetch.js';
 
 // The form is shared by the PDP block and the FAQ page block, so it carries its own styles.
 function loadStyles(wrapper) {
   wrapper.hidden = true;
-  loadCSS(`${window.hlx.codeBasePath}/scripts/amasty-faq/ask-form.css`)
+  loadCSS(`${window.hlx.codeBasePath}/scripts/amasty-faq/ask-form/ask-form.css`)
     .catch((error) => console.error('[amasty-faq] Failed to load the ask form styles.', error))
     .finally(() => {
       wrapper.hidden = false;

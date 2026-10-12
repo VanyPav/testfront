@@ -7,8 +7,8 @@
 import {
   Checkbox, Input, TextArea, provider as UI,
 } from '@dropins/tools/components.js';
-import { createElement } from './dom.js';
-import { FIELD_MAX_LENGTH } from './ask-form-validation.js';
+import { createElement } from '../helpers/dom.js';
+import { FIELD_MAX_LENGTH } from './validation.js';
 
 export const CLASS_NAME = 'amasty-faq-ask-form';
 
