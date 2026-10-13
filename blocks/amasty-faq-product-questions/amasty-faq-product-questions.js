@@ -10,6 +10,7 @@ import { events } from '@dropins/tools/event-bus.js';
 import { getSkuFromUrl } from '../../scripts/commerce.js';
 import createAskQuestionForm from '../../scripts/amasty-faq/ask-form/ask-form.js';
 import { createElement } from '../../scripts/amasty-faq/helpers/dom.js';
+import createSkeleton from '../../scripts/amasty-faq/helpers/skeleton.js';
 import { getFaqPdpData, isCustomerSignedIn } from '../../scripts/amasty-faq/faq-fetch.js';
 
 const GUEST_NOTICE = 'Please, mind that only logged in users can submit questions';
@@ -20,6 +21,7 @@ const CLASS_NAMES = {
   accordion: 'amasty-faq-product-questions__accordion',
   answer: 'amasty-faq-product-questions__answer',
   guestNotice: 'amasty-faq-product-questions__guest-notice',
+  skeleton: 'amasty-faq-product-questions__skeleton',
 };
 
 function resolveSku() {
@@ -67,15 +69,7 @@ function renderAccordion(wrapper, items) {
   wrapper.append(accordionContainer);
 }
 
-export default async function decorate(block) {
-  const sku = resolveSku();
-
-  if (!sku) {
-    block.remove();
-
-    return;
-  }
-
+async function renderQuestions(block, sku) {
   let data;
 
   try {
@@ -105,6 +99,21 @@ export default async function decorate(block) {
     renderGuestNotice(wrapper);
   }
 
-  block.textContent = '';
-  block.append(wrapper);
+  block.replaceChildren(wrapper);
+}
+
+export default function decorate(block) {
+  const sku = resolveSku();
+
+  if (!sku) {
+    block.remove();
+
+    return;
+  }
+
+  block.replaceChildren(createSkeleton(3, CLASS_NAMES.skeleton));
+
+  // Not awaited on purpose: EDS loads the header and footer only after the first section's
+  // blocks have finished decorating, so waiting for the FAQ API here keeps the page blank.
+  renderQuestions(block, sku);
 }

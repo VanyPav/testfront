@@ -4,13 +4,7 @@
  * @package FAQ and Product Questions
  */
 
-import {
-  Accordion,
-  AccordionSection,
-  Skeleton,
-  SkeletonRow,
-  provider as UI,
-} from '@dropins/tools/components.js';
+import { Accordion, AccordionSection, provider as UI } from '@dropins/tools/components.js';
 import { createElement as createVNode } from '@dropins/tools/preact-compat.js';
 import { createElement, createLink, createText } from '../helpers/dom.js';
 import { buildEntityUrl, buildHomeUrl } from '../router.js';
@@ -100,20 +94,4 @@ export function createAccordionColumns(settings, items) {
   }
 
   return columns;
-}
-
-export function createSkeleton(lines) {
-  const skeleton = createElement('div', { className: CLASS_NAMES.skeleton });
-
-  UI.render(Skeleton, {
-    rowGap: 'medium',
-    children: [
-      createVNode(SkeletonRow, { key: 'title', variant: 'heading', size: 'large' }),
-      createVNode(SkeletonRow, {
-        key: 'rows', size: 'medium', lines, fullWidth: true, multilineGap: 'medium',
-      }),
-    ],
-  })(skeleton);
-
-  return skeleton;
 }

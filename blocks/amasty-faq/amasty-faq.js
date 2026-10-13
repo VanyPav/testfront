@@ -10,7 +10,7 @@ import {
   getCachedFaqSettings,
   getFaqPageData,
 } from '../../scripts/amasty-faq/faq-fetch.js';
-import { createSkeleton } from '../../scripts/amasty-faq/faq-page/elements.js';
+import createSkeleton from '../../scripts/amasty-faq/helpers/skeleton.js';
 import renderContent from '../../scripts/amasty-faq/faq-page/routes.js';
 import {
   markCurrentCategory,
@@ -80,8 +80,8 @@ export default function decorate(block) {
   const sidebarPlaceholder = createElement('aside', { className: CLASS_NAMES.sidebar });
 
   wrapper.classList.add(CLASS_NAMES.wrapperWithSidebar);
-  content.append(createSkeleton(4));
-  sidebarPlaceholder.append(createSkeleton(3));
+  content.append(createSkeleton(4, CLASS_NAMES.skeleton));
+  sidebarPlaceholder.append(createSkeleton(3, CLASS_NAMES.skeleton));
   wrapper.append(content, sidebarPlaceholder);
   block.textContent = '';
   block.append(wrapper);
