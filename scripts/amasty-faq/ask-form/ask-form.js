@@ -14,7 +14,7 @@ import {
   createTextField,
   focusFirstInvalidField,
 } from './fields.js';
-import prefillFromAccount from './prefill.js';
+import prefillFromAccount, { restoreAccountEmail } from './prefill.js';
 import { TEXT } from './text.js';
 import {
   QUESTION_MAX_LENGTH,
@@ -73,6 +73,10 @@ export default function createAskQuestionForm(sku) {
     onChange: (checked) => {
       wantsNotification = checked;
       emailField.setVisible(checked);
+
+      if (!checked) {
+        restoreAccountEmail(emailField);
+      }
     },
   });
   const honeypotField = createHoneypotField();

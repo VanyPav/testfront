@@ -7,6 +7,39 @@
 import { getCookie } from '@dropins/tools/lib.js';
 import { checkIsAuthenticated } from '../../commerce.js';
 
+let accountEmailRequest;
+
+async function getAccountEmail() {
+  if (!checkIsAuthenticated()) {
+    return '';
+  }
+
+  accountEmailRequest ??= (async () => {
+    await import('../../initializers/account.js');
+    const { getCustomer } = await import('@dropins/storefront-account/api.js');
+    const customer = await getCustomer();
+
+    return customer?.email || '';
+  })().catch((error) => {
+    console.error('[amasty-faq] Could not prefill the customer email.', error);
+    accountEmailRequest = undefined;
+
+    return '';
+  });
+
+  return accountEmailRequest;
+}
+
+// While the email field is hidden the shopper cannot see what it holds, so it goes back to the
+// account address whatever was typed or cleared in it.
+export async function restoreAccountEmail(emailField) {
+  const email = await getAccountEmail();
+
+  if (email) {
+    emailField.setValue(email);
+  }
+}
+
 export default async function prefillFromAccount(nameField, emailField) {
   if (!checkIsAuthenticated()) {
     return;
@@ -18,16 +51,9 @@ export default async function prefillFromAccount(nameField, emailField) {
     nameField.setValue(firstname);
   }
 
-  try {
-    await import('../../initializers/account.js');
-    const { getCustomer } = await import('@dropins/storefront-account/api.js');
-    const customer = await getCustomer();
-    const email = customer?.email;
+  const email = await getAccountEmail();
 
-    if (email && !emailField.getValue()) {
-      emailField.setValue(email);
-    }
-  } catch (error) {
-    console.error('[amasty-faq] Could not prefill the customer email.', error);
+  if (email && !emailField.getValue()) {
+    emailField.setValue(email);
   }
 }
