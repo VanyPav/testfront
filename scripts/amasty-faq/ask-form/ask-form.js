@@ -132,6 +132,7 @@ export default function createAskQuestionForm(sku) {
       [...validatedFields, notifyField, honeypotField].forEach((field) => field.reset());
       wantsNotification = false;
       emailField.setVisible(false);
+      prefillFromAccount(nameField, emailField);
       formRenderedAt = Date.now();
 
       renderAlert(alertContainer, {
