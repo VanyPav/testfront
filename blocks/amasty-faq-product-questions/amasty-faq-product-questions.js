@@ -85,7 +85,6 @@ async function renderQuestions(block, sku) {
   const items = Array.isArray(productQuestions?.items) ? productQuestions.items : [];
   const showAskForm = canAskQuestion(settings);
 
-  // Nothing to read and nothing to submit: a heading over a guest notice alone is noise.
   if (items.length === 0 && !showAskForm) {
     block.remove();
 
