@@ -30,8 +30,6 @@ async function getAccountEmail() {
   return accountEmailRequest;
 }
 
-// While the email field is hidden the shopper cannot see what it holds, so it goes back to the
-// account address whatever was typed or cleared in it.
 export async function restoreAccountEmail(emailField) {
   const email = await getAccountEmail();
 
