@@ -73,6 +73,11 @@
         font: var(--type-body-1-default-font);
     }
 
+    /* The body text is weight 300, and the browser's `bolder` only lifts that to 400. */
+    .amasty-faq__answer :is(strong, b) {
+        font-weight: 700;
+    }
+
     .amasty-faq__accordion .amasty-faq__answer {
         padding: var(--spacing-small) 0;
     }
