@@ -1,33 +1,31 @@
 {
   "public": {
     "default": {
-      "commerce-core-endpoint": "https://na1-sandbox.api.commerce.adobe.com/8srqbDxubwLPmcog2RWgF8/graphql",
-      "commerce-endpoint": "https://na1-sandbox.api.commerce.adobe.com/8srqbDxubwLPmcog2RWgF8/graphql",
+      "commerce-core-endpoint": "https://ee249eds--ipavlovsky.ap85.amasty.net/graphql",
+      "commerce-endpoint": "https://catalog-service-sandbox.adobe.io/graphql",
       "headers": {
+        "all": {
+          "Store": "amasty_paas_view"
+        },
         "cs": {
           "Magento-Customer-Group": "b6589fc6ab0dc82cf12099d1c2d40ab994e8410c",
-          "Magento-Store-Code": "main_website_store",
-          "Magento-Store-View-Code": "default",
-          "Magento-Website-Code": "base",
-          "x-api-key": "4dfa19c9fe6f4cccade55cc5b3da94f7",
-          "Magento-Environment-Id": "f38a0de0-764b-41fa-bd2c-5bc2f3c7b39a"
+          "Magento-Store-Code": "amasty_paas_store",
+          "Magento-Store-View-Code": "amasty_paas_view",
+          "Magento-Website-Code": "amasty_paas",
+          "x-api-key": "search_gql",
+          "Magento-Environment-Id": "bcc3345b-81b7-48d4-ac13-e3d32753accb"
         }
       },
       "analytics": {
         "base-currency-code": "USD",
-        "environment": "Production",
+        "environment": "Testing",
         "store-id": 1,
-        "store-name": "Main Website Store",
-        "store-url": "https://main--testfront--VanyPav.aem.live/",
+        "store-name": "Main Website PaaS Store",
+        "store-url": "https://paas--testfront--vanypav.aem.live/",
         "store-view-id": 1,
-        "store-view-name": "Default Store View",
+        "store-view-name": "PaaS Store View",
         "website-id": 1,
-        "website-name": "Main Website"
-      },
-      "amasty": {
-        "custom-form-builder-endpoint": "https://edge-sandbox-graph.adobe.io/api/dd99356e-fa0d-4f7f-a7c0-34ed9ab6a833/graphql",
-        "acart-verify-token-endpoint": "https://3452959-acartrecovery-stage.adobeio-static.net/api/v1/web/amastyAbandonedCartRecovery/verify-cart-token",
-        "faq-endpoint": "https://edge-sandbox-graph.adobe.io/api/a38aee44-2a54-4b73-b6f4-6f014d8ac0f6/graphql"
+        "website-name": "Main PaaS Website"
       }
     }
   }
