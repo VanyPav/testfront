@@ -26,6 +26,9 @@
         "store-view-name": "PaaS Store View",
         "website-id": 1,
         "website-name": "Main PaaS Website"
+      },
+      "amasty": {
+        "faq-endpoint": "https://edge-sandbox-graph.adobe.io/api/588e7752-4572-4ea8-bbec-a5f76bb81892/graphql"
       }
     }
   }
